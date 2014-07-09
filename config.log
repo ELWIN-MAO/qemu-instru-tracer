@@ -1,0 +1,5 @@
+# QEMU configure log 2014年 06月 22日 星期日 22:44:52 CST
+# Configured with: './configure' '--help'
+#
+cc -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -Wstrict-prototypes -Wredundant-decls -Wall -Wundef -Wwrite-strings -Wmissing-prototypes -fno-strict-aliasing -fno-common -c -o /tmp/qemu-conf--2735-.o /tmp/qemu-conf--2735-.c
+cc -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -Wstrict-prototypes -Wredundant-decls -Wall -Wundef -Wwrite-strings -Wmissing-prototypes -fno-strict-aliasing -fno-common -c -o /tmp/qemu-conf--2735-.o /tmp/qemu-conf--2735-.c

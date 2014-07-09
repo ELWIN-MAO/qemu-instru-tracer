@@ -1,0 +1,2 @@
+modprobe factorial
+poweroff
