@@ -19,7 +19,9 @@
  */
 
 #include "cpu.h"
+#include "kvm_mips.h"
 #include "qemu-common.h"
+#include "sysemu/kvm.h"
 
 
 static void mips_cpu_set_pc(CPUState *cs, vaddr value)
@@ -87,6 +89,12 @@ static void mips_cpu_reset(CPUState *s)
     tlb_flush(s, 1);
 
     cpu_state_reset(env);
+
+#ifndef CONFIG_USER_ONLY
+    if (kvm_enabled()) {
+        kvm_mips_reset_vcpu(cpu);
+    }
+#endif
 }
 
 static void mips_cpu_realizefn(DeviceState *dev, Error **errp)
@@ -137,6 +145,7 @@ static void mips_cpu_class_init(ObjectClass *c, void *data)
     cc->handle_mmu_fault = mips_cpu_handle_mmu_fault;
 #else
     cc->do_unassigned_access = mips_cpu_unassigned_access;
+    cc->do_unaligned_access = mips_cpu_do_unaligned_access;
     cc->get_phys_page_debug = mips_cpu_get_phys_page_debug;
 #endif
 

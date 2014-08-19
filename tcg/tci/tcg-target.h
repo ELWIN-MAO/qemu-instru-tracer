@@ -43,6 +43,7 @@
 #include "config-host.h"
 
 #define TCG_TARGET_INTERPRETER 1
+#define TCG_TARGET_INSN_UNIT_SIZE 1
 
 #if UINTPTR_MAX == UINT32_MAX
 # define TCG_TARGET_REG_BITS 32
@@ -82,6 +83,7 @@
 #define TCG_TARGET_HAS_mulsh_i32        0
 
 #if TCG_TARGET_REG_BITS == 64
+#define TCG_TARGET_HAS_trunc_shr_i32    0
 #define TCG_TARGET_HAS_bswap16_i64      1
 #define TCG_TARGET_HAS_bswap32_i64      1
 #define TCG_TARGET_HAS_bswap64_i64      1
@@ -115,8 +117,6 @@
 #else
 #define TCG_TARGET_HAS_mulu2_i32        1
 #endif /* TCG_TARGET_REG_BITS == 64 */
-
-#define TCG_TARGET_HAS_new_ldst         0
 
 /* Number of registers available.
    For 32 bit hosts, we need more than 8 registers (call arguments). */

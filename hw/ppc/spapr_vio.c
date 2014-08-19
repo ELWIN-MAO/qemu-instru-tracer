@@ -449,14 +449,18 @@ static int spapr_vio_busdev_init(DeviceState *qdev)
         dev->qdev.id = id;
     }
 
-    dev->irq = spapr_allocate_msi(dev->irq);
+    dev->irq = xics_alloc(spapr->icp, 0, dev->irq, false);
     if (!dev->irq) {
         return -1;
     }
 
     if (pc->rtce_window_size) {
         uint32_t liobn = SPAPR_VIO_BASE_LIOBN | dev->reg;
-        dev->tcet = spapr_tce_new_table(qdev, liobn, pc->rtce_window_size);
+        dev->tcet = spapr_tce_new_table(qdev, liobn,
+                                        0,
+                                        SPAPR_TCE_PAGE_SHIFT,
+                                        pc->rtce_window_size >>
+                                        SPAPR_TCE_PAGE_SHIFT, false);
         address_space_init(&dev->as, spapr_tce_get_iommu(dev->tcet), qdev->id);
     }
 
@@ -513,8 +517,9 @@ VIOsPAPRBus *spapr_vio_bus_init(void)
     spapr_register_hypercall(H_ENABLE_CRQ, h_enable_crq);
 
     /* RTAS calls */
-    spapr_rtas_register("ibm,set-tce-bypass", rtas_set_tce_bypass);
-    spapr_rtas_register("quiesce", rtas_quiesce);
+    spapr_rtas_register(RTAS_IBM_SET_TCE_BYPASS, "ibm,set-tce-bypass",
+                        rtas_set_tce_bypass);
+    spapr_rtas_register(RTAS_QUIESCE, "quiesce", rtas_quiesce);
 
     return bus;
 }
@@ -547,8 +552,7 @@ const VMStateDescription vmstate_spapr_vio = {
     .name = "spapr_vio",
     .version_id = 1,
     .minimum_version_id = 1,
-    .minimum_version_id_old = 1,
-    .fields      = (VMStateField []) {
+    .fields = (VMStateField[]) {
         /* Sanity check */
         VMSTATE_UINT32_EQUAL(reg, VIOsPAPRDevice),
         VMSTATE_UINT32_EQUAL(irq, VIOsPAPRDevice),

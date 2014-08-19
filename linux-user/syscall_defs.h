@@ -121,6 +121,16 @@ struct target_sockaddr {
     uint8_t sa_data[14];
 };
 
+struct target_sockaddr_ll {
+    uint16_t sll_family;   /* Always AF_PACKET */
+    uint16_t sll_protocol; /* Physical layer protocol */
+    int      sll_ifindex;  /* Interface number */
+    uint16_t sll_hatype;   /* ARP hardware type */
+    uint8_t  sll_pkttype;  /* Packet type */
+    uint8_t  sll_halen;    /* Length of address */
+    uint8_t  sll_addr[8];  /* Physical layer address */
+};
+
 struct target_sock_filter {
     abi_ushort code;
     uint8_t jt;
@@ -163,6 +173,11 @@ struct target_timeval {
 struct target_timespec {
     abi_long tv_sec;
     abi_long tv_nsec;
+};
+
+struct target_timezone {
+    abi_int tz_minuteswest;
+    abi_int tz_dsttime;
 };
 
 struct target_itimerval {
@@ -826,6 +841,7 @@ struct target_pollfd {
 #define TARGET_KDSKBLED        0x4B65	/* set led flags (not lights) */
 #define TARGET_KDGETLED        0x4B31	/* return current led state */
 #define TARGET_KDSETLED        0x4B32	/* set led state [lights, not flags] */
+#define TARGET_KDSIGACCEPT     0x4B4E
 
 #define TARGET_SIOCATMARK      0x8905
 
@@ -859,6 +875,7 @@ struct target_pollfd {
 #define TARGET_SIOCSIFSLAVE    0x8930
 #define TARGET_SIOCADDMULTI    0x8931          /* Multicast address lists      */
 #define TARGET_SIOCDELMULTI    0x8932
+#define TARGET_SIOCGIFINDEX    0x8933
 
 /* Bridging control calls */
 #define TARGET_SIOCGIFBR       0x8940          /* Bridging support             */
@@ -2528,7 +2545,7 @@ typedef union target_epoll_data {
 
 struct target_epoll_event {
     uint32_t events;
-#ifdef TARGET_ARM
+#if defined(TARGET_ARM) || defined(TARGET_MIPS) || defined(TARGET_MIPS64)
     uint32_t __pad;
 #endif
     target_epoll_data_t data;
@@ -2552,12 +2569,26 @@ struct target_timer_t {
     abi_ulong ptr;
 };
 
+#define TARGET_SIGEV_MAX_SIZE 64
+
+/* This is architecture-specific but most architectures use the default */
+#ifdef TARGET_MIPS
+#define TARGET_SIGEV_PREAMBLE_SIZE (sizeof(int32_t) * 2 + sizeof(abi_long))
+#else
+#define TARGET_SIGEV_PREAMBLE_SIZE (sizeof(int32_t) * 2 \
+                                    + sizeof(target_sigval_t))
+#endif
+
+#define TARGET_SIGEV_PAD_SIZE ((TARGET_SIGEV_MAX_SIZE \
+                                - TARGET_SIGEV_PREAMBLE_SIZE) \
+                               / sizeof(int32_t))
+
 struct target_sigevent {
     target_sigval_t sigev_value;
     int32_t sigev_signo;
     int32_t sigev_notify;
     union {
-        int32_t _pad[ARRAY_SIZE(((struct sigevent *)0)->_sigev_un._pad)];
+        int32_t _pad[TARGET_SIGEV_PAD_SIZE];
         int32_t _tid;
 
         struct {

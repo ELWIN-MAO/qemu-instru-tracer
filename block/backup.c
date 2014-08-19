@@ -307,7 +307,7 @@ static void coroutine_fn backup_run(void *opaque)
                                 BACKUP_SECTORS_PER_CLUSTER - i, &n);
                     i += n;
 
-                    if (alloced == 1) {
+                    if (alloced == 1 || n == 0) {
                         break;
                     }
                 }
@@ -325,7 +325,7 @@ static void coroutine_fn backup_run(void *opaque)
                 /* Depending on error action, fail now or retry cluster */
                 BlockErrorAction action =
                     backup_error_action(job, error_is_read, -ret);
-                if (action == BDRV_ACTION_REPORT) {
+                if (action == BLOCK_ERROR_ACTION_REPORT) {
                     break;
                 } else {
                     start--;

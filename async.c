@@ -26,6 +26,7 @@
 #include "block/aio.h"
 #include "block/thread-pool.h"
 #include "qemu/main-loop.h"
+#include "qemu/atomic.h"
 
 /***********************************************************/
 /* bottom halves (can be seen as timers which expire ASAP) */
@@ -117,15 +118,21 @@ void qemu_bh_schedule_idle(QEMUBH *bh)
 
 void qemu_bh_schedule(QEMUBH *bh)
 {
+    AioContext *ctx;
+
     if (bh->scheduled)
         return;
+    ctx = bh->ctx;
     bh->idle = 0;
-    /* Make sure that idle & any writes needed by the callback are done
-     * before the locations are read in the aio_bh_poll.
+    /* Make sure that:
+     * 1. idle & any writes needed by the callback are done before the
+     *    locations are read in the aio_bh_poll.
+     * 2. ctx is loaded before scheduled is set and the callback has a chance
+     *    to execute.
      */
-    smp_wmb();
+    smp_mb();
     bh->scheduled = 1;
-    aio_notify(bh->ctx);
+    aio_notify(ctx);
 }
 
 
@@ -241,9 +248,25 @@ ThreadPool *aio_get_thread_pool(AioContext *ctx)
     return ctx->thread_pool;
 }
 
+void aio_set_dispatching(AioContext *ctx, bool dispatching)
+{
+    ctx->dispatching = dispatching;
+    if (!dispatching) {
+        /* Write ctx->dispatching before reading e.g. bh->scheduled.
+         * Optimization: this is only needed when we're entering the "unsafe"
+         * phase where other threads must call event_notifier_set.
+         */
+        smp_mb();
+    }
+}
+
 void aio_notify(AioContext *ctx)
 {
-    event_notifier_set(&ctx->notifier);
+    /* Write e.g. bh->scheduled before reading ctx->dispatching.  */
+    smp_mb();
+    if (!ctx->dispatching) {
+        event_notifier_set(&ctx->notifier);
+    }
 }
 
 static void aio_timerlist_notify(void *opaque)

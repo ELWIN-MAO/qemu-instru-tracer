@@ -28,7 +28,6 @@
 
 #include "qemu.h"
 #include "qemu-common.h"
-#include "qemu/cache-utils.h"
 #include "cpu.h"
 #include "tcg.h"
 #include "qemu/timer.h"
@@ -69,7 +68,7 @@ unsigned long reserved_va;
 static void usage(void);
 
 static const char *interp_prefix = CONFIG_QEMU_INTERP_PREFIX;
-const char *qemu_uname_release = CONFIG_UNAME_RELEASE;
+const char *qemu_uname_release;
 
 /* XXX: on x86 MAP_GROWSDOWN only works if ESP <= address + 32, so
    we allocate a bigger stack. Need a better solution, for example
@@ -807,6 +806,9 @@ void cpu_loop(CPUARMState *env)
                             cpu_set_tls(env, env->regs[0]);
                             env->regs[0] = 0;
                             break;
+                        case ARM_NR_breakpoint:
+                            env->regs[15] -= env->thumb ? 2 : 4;
+                            goto excp_debug;
                         default:
                             gemu_log("qemu: Unsupported ARM syscall: 0x%x\n",
                                      n);
@@ -850,6 +852,7 @@ void cpu_loop(CPUARMState *env)
             }
             break;
         case EXCP_DEBUG:
+        excp_debug:
             {
                 int sig;
 
@@ -1484,7 +1487,7 @@ static int do_store_exclusive(CPUPPCState *env)
 {
     target_ulong addr;
     target_ulong page_addr;
-    target_ulong val, val2 __attribute__((unused));
+    target_ulong val, val2 __attribute__((unused)) = 0;
     int flags;
     int segv = 0;
 
@@ -1497,7 +1500,7 @@ static int do_store_exclusive(CPUPPCState *env)
         segv = 1;
     } else {
         int reg = env->reserve_info & 0x1f;
-        int size = (env->reserve_info >> 5) & 0xf;
+        int size = env->reserve_info >> 5;
         int stored = 0;
 
         if (addr == env->reserve_addr) {
@@ -1527,6 +1530,12 @@ static int do_store_exclusive(CPUPPCState *env)
                 case 8: segv = put_user_u64(val, addr); break;
                 case 16: {
                     if (val2 == env->reserve_val2) {
+                        if (msr_le) {
+                            val2 = val;
+                            val = env->gpr[reg+1];
+                        } else {
+                            val2 = env->gpr[reg+1];
+                        }
                         segv = put_user_u64(val, addr);
                         if (!segv) {
                             segv = put_user_u64(val2, addr + 8);
@@ -3823,9 +3832,6 @@ int main(int argc, char **argv, char **envp)
 
     module_call_init(MODULE_INIT_QOM);
 
-    qemu_init_auxval(envp);
-    qemu_cache_utils_init();
-
     if ((envlist = envlist_create()) == NULL) {
         (void) fprintf(stderr, "Unable to allocate envlist\n");
         exit(1);
@@ -3895,11 +3901,11 @@ int main(int argc, char **argv, char **envp)
 #elif defined TARGET_OPENRISC
         cpu_model = "or1200";
 #elif defined(TARGET_PPC)
-#ifdef TARGET_PPC64
-        cpu_model = "970fx";
-#else
+# ifdef TARGET_PPC64
+        cpu_model = "POWER7";
+# else
         cpu_model = "750";
-#endif
+# endif
 #else
         cpu_model = "any";
 #endif
@@ -4051,10 +4057,8 @@ int main(int argc, char **argv, char **envp)
 #endif
 
 #if defined(TARGET_I386)
-    cpu_x86_set_cpl(env, 3);
-
     env->cr[0] = CR0_PG_MASK | CR0_WP_MASK | CR0_PE_MASK;
-    env->hflags |= HF_PE_MASK;
+    env->hflags |= HF_PE_MASK | HF_CPL_MASK;
     if (env->features[FEAT_1_EDX] & CPUID_SSE) {
         env->cr[4] |= CR4_OSFXSR_MASK;
         env->hflags |= HF_OSFXSR_MASK;

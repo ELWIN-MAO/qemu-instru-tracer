@@ -21,10 +21,10 @@
 #include "disas/disas.h"
 #include "qemu/host-utils.h"
 #include "tcg-op.h"
+#include "exec/cpu_ldst.h"
 
-#include "helper.h"
-#define GEN_HELPER 1
-#include "helper.h"
+#include "exec/helper-proto.h"
+#include "exec/helper-gen.h"
 
 #undef ALPHA_DEBUG_DISAS
 #define CONFIG_SOFTFLOAT_INLINE
@@ -1201,7 +1201,7 @@ static ExitStatus gen_call_pal(DisasContext *ctx, int palcode)
             break;
         case 0x3A:
             /* RDUSP */
-            tcg_gen_st_i64(cpu_ir[IR_V0], cpu_env,
+            tcg_gen_ld_i64(cpu_ir[IR_V0], cpu_env,
                            offsetof(CPUAlphaState, usp));
             break;
         case 0x3C:

@@ -124,9 +124,9 @@
 #define ID_MASK                 0x00200000
 
 /* hidden flags - used internally by qemu to represent additional cpu
-   states. Only the CPL, INHIBIT_IRQ, SMM and SVMI are not
-   redundant. We avoid using the IOPL_MASK, TF_MASK, VM_MASK and AC_MASK
-   bit positions to ease oring with eflags. */
+   states. Only the INHIBIT_IRQ, SMM and SVMI are not redundant. We
+   avoid using the IOPL_MASK, TF_MASK, VM_MASK and AC_MASK bit
+   positions to ease oring with eflags. */
 /* current cpl */
 #define HF_CPL_SHIFT         0
 /* true if soft mmu is being used */
@@ -249,6 +249,7 @@
 #define PG_DIRTY_BIT    6
 #define PG_PSE_BIT      7
 #define PG_GLOBAL_BIT   8
+#define PG_PSE_PAT_BIT  12
 #define PG_NX_BIT       63
 
 #define PG_PRESENT_MASK  (1 << PG_PRESENT_BIT)
@@ -260,6 +261,9 @@
 #define PG_DIRTY_MASK    (1 << PG_DIRTY_BIT)
 #define PG_PSE_MASK      (1 << PG_PSE_BIT)
 #define PG_GLOBAL_MASK   (1 << PG_GLOBAL_BIT)
+#define PG_PSE_PAT_MASK  (1 << PG_PSE_PAT_BIT)
+#define PG_ADDRESS_MASK  0x000ffffffffff000LL
+#define PG_HI_RSVD_MASK  (PG_ADDRESS_MASK & ~PHYS_ADDR_MASK)
 #define PG_HI_USER_MASK  0x7ff0000000000000LL
 #define PG_NX_MASK       (1LL << PG_NX_BIT)
 
@@ -398,6 +402,7 @@ typedef enum FeatureWord {
     FEAT_7_0_EBX,       /* CPUID[EAX=7,ECX=0].EBX */
     FEAT_8000_0001_EDX, /* CPUID[8000_0001].EDX */
     FEAT_8000_0001_ECX, /* CPUID[8000_0001].ECX */
+    FEAT_8000_0007_EDX, /* CPUID[8000_0007].EDX */
     FEAT_C000_0001_EDX, /* CPUID[C000_0001].EDX */
     FEAT_KVM,           /* CPUID[4000_0001].EAX (KVM_CPUID_FEATURES) */
     FEAT_SVM,           /* CPUID[8000_000A].EDX */
@@ -557,6 +562,9 @@ typedef uint32_t FeatureWordArray[FEATURE_WORDS];
 #define CPUID_7_0_EBX_ADX      (1U << 19)
 #define CPUID_7_0_EBX_SMAP     (1U << 20)
 
+/* CPUID[0x80000007].EDX flags: */
+#define CPUID_APM_INVTSC       (1U << 8)
+
 #define CPUID_VENDOR_SZ      12
 
 #define CPUID_VENDOR_INTEL_1 0x756e6547 /* "Genu" */
@@ -606,10 +614,11 @@ typedef uint32_t FeatureWordArray[FEATURE_WORDS];
 #define CPU_INTERRUPT_NMI       CPU_INTERRUPT_TGT_EXT_3
 #define CPU_INTERRUPT_MCE       CPU_INTERRUPT_TGT_EXT_4
 #define CPU_INTERRUPT_VIRQ      CPU_INTERRUPT_TGT_INT_0
-#define CPU_INTERRUPT_INIT      CPU_INTERRUPT_TGT_INT_1
-#define CPU_INTERRUPT_SIPI      CPU_INTERRUPT_TGT_INT_2
-#define CPU_INTERRUPT_TPR       CPU_INTERRUPT_TGT_INT_3
+#define CPU_INTERRUPT_SIPI      CPU_INTERRUPT_TGT_INT_1
+#define CPU_INTERRUPT_TPR       CPU_INTERRUPT_TGT_INT_2
 
+/* Use a clearer name for this.  */
+#define CPU_INTERRUPT_INIT      CPU_INTERRUPT_RESET
 
 typedef enum {
     CC_OP_DYNAMIC, /* must use dynamic code to get cc_op */
@@ -797,6 +806,13 @@ typedef struct CPUX86State {
     target_ulong cr[5]; /* NOTE: cr1 is unused */
     int32_t a20_mask;
 
+    BNDReg bnd_regs[4];
+    BNDCSReg bndcs_regs;
+    uint64_t msr_bndcfgs;
+
+    /* Beginning of state preserved by INIT (dummy marker).  */
+    struct {} start_init_save;
+
     /* FPU state */
     unsigned int fpstt; /* top of stack index */
     uint16_t fpus;
@@ -819,6 +835,8 @@ typedef struct CPUX86State {
     XMMReg xmm_t0;
     MMXReg mmx_t0;
 
+    XMMReg ymmh_regs[CPU_NB_REGS];
+
     /* sysenter registers */
     uint32_t sysenter_cs;
     target_ulong sysenter_esp;
@@ -827,15 +845,6 @@ typedef struct CPUX86State {
     uint64_t star;
 
     uint64_t vm_hsave;
-    uint64_t vm_vmcb;
-    uint64_t tsc_offset;
-    uint64_t intercept;
-    uint16_t intercept_cr_read;
-    uint16_t intercept_cr_write;
-    uint16_t intercept_dr_read;
-    uint16_t intercept_dr_write;
-    uint32_t intercept_exceptions;
-    uint8_t v_tpr;
 
 #ifdef TARGET_X86_64
     target_ulong lstar;
@@ -843,11 +852,6 @@ typedef struct CPUX86State {
     target_ulong fmask;
     target_ulong kernelgsbase;
 #endif
-    uint64_t system_time_msr;
-    uint64_t wall_clock_msr;
-    uint64_t steal_time_msr;
-    uint64_t async_pf_en_msr;
-    uint64_t pv_eoi_en_msr;
 
     uint64_t tsc;
     uint64_t tsc_adjust;
@@ -864,6 +868,19 @@ typedef struct CPUX86State {
     uint64_t msr_fixed_counters[MAX_FIXED_COUNTERS];
     uint64_t msr_gp_counters[MAX_GP_COUNTERS];
     uint64_t msr_gp_evtsel[MAX_GP_COUNTERS];
+
+    uint64_t pat;
+    uint32_t smbase;
+
+    /* End of state preserved by INIT (dummy marker).  */
+    struct {} end_init_save;
+
+    uint64_t system_time_msr;
+    uint64_t wall_clock_msr;
+    uint64_t steal_time_msr;
+    uint64_t async_pf_en_msr;
+    uint64_t pv_eoi_en_msr;
+
     uint64_t msr_hv_hypercall;
     uint64_t msr_hv_guest_os_id;
     uint64_t msr_hv_vapic;
@@ -878,8 +895,17 @@ typedef struct CPUX86State {
         struct CPUBreakpoint *cpu_breakpoint[4];
         struct CPUWatchpoint *cpu_watchpoint[4];
     }; /* break/watchpoints for dr[0..3] */
-    uint32_t smbase;
     int old_exception;  /* exception in flight */
+
+    uint64_t vm_vmcb;
+    uint64_t tsc_offset;
+    uint64_t intercept;
+    uint16_t intercept_cr_read;
+    uint16_t intercept_cr_write;
+    uint16_t intercept_dr_read;
+    uint16_t intercept_dr_write;
+    uint32_t intercept_exceptions;
+    uint8_t v_tpr;
 
     /* KVM states, automatically cleared on reset */
     uint8_t nmi_injected;
@@ -888,7 +914,6 @@ typedef struct CPUX86State {
     CPU_COMMON
 
     /* Fields from here on are preserved across CPU reset. */
-    uint64_t pat;
 
     /* processor features (e.g. for CPUID insn) */
     uint32_t cpuid_level;
@@ -928,12 +953,7 @@ typedef struct CPUX86State {
     uint16_t fpus_vmstate;
     uint16_t fptag_vmstate;
     uint16_t fpregs_format_vmstate;
-
     uint64_t xstate_bv;
-    XMMReg ymmh_regs[CPU_NB_REGS];
-    BNDReg bnd_regs[4];
-    BNDCSReg bndcs_regs;
-    uint64_t msr_bndcfgs;
 
     uint64_t xcr0;
 
@@ -989,6 +1009,13 @@ static inline void cpu_x86_load_seg_cache(CPUX86State *env,
                     new_hflags;
             }
         }
+        if (seg_reg == R_SS) {
+            int cpl = (flags >> DESC_DPL_SHIFT) & 3;
+#if HF_CPL_MASK != 3
+#error HF_CPL_MASK is hardcoded
+#endif
+            env->hflags = (env->hflags & ~HF_CPL_MASK) | cpl;
+        }
         new_hflags = (env->segs[R_SS].flags & DESC_B_MASK)
             >> (DESC_B_SHIFT - HF_SS32_SHIFT);
         if (env->hflags & HF_CS64_MASK) {
@@ -1030,16 +1057,6 @@ static inline void cpu_x86_load_seg_cache_sipi(X86CPU *cpu,
 int cpu_x86_get_descr_debug(CPUX86State *env, unsigned int selector,
                             target_ulong *base, unsigned int *limit,
                             unsigned int *flags);
-
-/* wrapper, just in case memory mappings must be changed */
-static inline void cpu_x86_set_cpl(CPUX86State *s, int cpl)
-{
-#if HF_CPL_MASK == 3
-    s->hflags = (s->hflags & ~HF_CPL_MASK) | cpl;
-#else
-#error HF_CPL_MASK is hardcoded
-#endif
-}
 
 /* op_helper.c */
 /* used for debug or cpu save/restore */
@@ -1126,6 +1143,14 @@ uint64_t cpu_get_tsc(CPUX86State *env);
 #define TARGET_VIRT_ADDR_SPACE_BITS 32
 #endif
 
+/* XXX: This value should match the one returned by CPUID
+ * and in exec.c */
+# if defined(TARGET_X86_64)
+# define PHYS_ADDR_MASK 0xffffffffffLL
+# else
+# define PHYS_ADDR_MASK 0xfffffffffLL
+# endif
+
 static inline CPUX86State *cpu_init(const char *cpu_model)
 {
     X86CPU *cpu = cpu_x86_init(cpu_model);
@@ -1142,17 +1167,24 @@ static inline CPUX86State *cpu_init(const char *cpu_model)
 #define cpudef_setup x86_cpudef_setup
 
 /* MMU modes definitions */
-#define MMU_MODE0_SUFFIX _kernel
+#define MMU_MODE0_SUFFIX _ksmap
 #define MMU_MODE1_SUFFIX _user
-#define MMU_MODE2_SUFFIX _ksmap /* Kernel with SMAP override */
-#define MMU_KERNEL_IDX  0
+#define MMU_MODE2_SUFFIX _knosmap /* SMAP disabled or CPL<3 && AC=1 */
+#define MMU_KSMAP_IDX   0
 #define MMU_USER_IDX    1
-#define MMU_KSMAP_IDX   2
-static inline int cpu_mmu_index (CPUX86State *env)
+#define MMU_KNOSMAP_IDX 2
+static inline int cpu_mmu_index(CPUX86State *env)
 {
     return (env->hflags & HF_CPL_MASK) == 3 ? MMU_USER_IDX :
-        ((env->hflags & HF_SMAP_MASK) && (env->eflags & AC_MASK))
-        ? MMU_KSMAP_IDX : MMU_KERNEL_IDX;
+        (!(env->hflags & HF_SMAP_MASK) || (env->eflags & AC_MASK))
+        ? MMU_KNOSMAP_IDX : MMU_KSMAP_IDX;
+}
+
+static inline int cpu_mmu_index_kernel(CPUX86State *env)
+{
+    return !(env->hflags & HF_SMAP_MASK) ? MMU_KNOSMAP_IDX :
+        ((env->hflags & HF_CPL_MASK) < 3 && (env->eflags & AC_MASK))
+        ? MMU_KNOSMAP_IDX : MMU_KSMAP_IDX;
 }
 
 #define CC_DST  (env->cc_dst)
@@ -1223,11 +1255,14 @@ static inline uint32_t cpu_compute_eflags(CPUX86State *env)
     return env->eflags | cpu_cc_compute_all(env, CC_OP) | (env->df & DF_MASK);
 }
 
-/* NOTE: CC_OP must be modified manually to CC_OP_EFLAGS */
+/* NOTE: the translator must set DisasContext.cc_op to CC_OP_EFLAGS
+ * after generating a call to a helper that uses this.
+ */
 static inline void cpu_load_eflags(CPUX86State *env, int eflags,
                                    int update_mask)
 {
     CC_SRC = eflags & (CC_O | CC_S | CC_Z | CC_A | CC_P | CC_C);
+    CC_OP = CC_OP_EFLAGS;
     env->df = 1 - (2 * ((eflags >> 10) & 1));
     env->eflags = (env->eflags & ~update_mask) |
         (eflags & update_mask) | 0x2;

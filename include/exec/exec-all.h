@@ -131,17 +131,12 @@ static inline void tlb_flush(CPUState *cpu, int flush_global)
 #if defined(__arm__) || defined(_ARCH_PPC) \
     || defined(__x86_64__) || defined(__i386__) \
     || defined(__sparc__) || defined(__aarch64__) \
+    || defined(__s390x__) || defined(__mips__) \
     || defined(CONFIG_TCG_INTERPRETER)
 #define USE_DIRECT_JUMP
 #endif
 
-#define TB_DEFAULT 0
-#define TB_CALL 1
-#define TB_RET 2
-
 struct TranslationBlock {
-	uint8_t type;	
-	
     target_ulong pc;   /* simulated PC corresponding to this block (EIP + CS base) */
     target_ulong cs_base; /* CS base for this block */
     uint64_t flags; /* flags defining in which context the code was generated */
@@ -151,7 +146,7 @@ struct TranslationBlock {
 #define CF_COUNT_MASK  0x7fff
 #define CF_LAST_IO     0x8000 /* Last insn may be an IO access.  */
 
-    uint8_t *tc_ptr;    /* pointer to the translated code */
+    void *tc_ptr;    /* pointer to the translated code */
     /* next matching tb for physical address. */
     struct TranslationBlock *phys_hash_next;
     /* first and second physical page containing code. The lower bit
@@ -229,13 +224,21 @@ static inline void tb_set_jmp_target1(uintptr_t jmp_addr, uintptr_t addr)
     /* no need to flush icache explicitly */
 }
 #elif defined(_ARCH_PPC)
-void ppc_tb_set_jmp_target(unsigned long jmp_addr, unsigned long addr);
+void ppc_tb_set_jmp_target(uintptr_t jmp_addr, uintptr_t addr);
 #define tb_set_jmp_target1 ppc_tb_set_jmp_target
 #elif defined(__i386__) || defined(__x86_64__)
 static inline void tb_set_jmp_target1(uintptr_t jmp_addr, uintptr_t addr)
 {
     /* patch the branch destination */
-    *(uint32_t *)jmp_addr = addr - (jmp_addr + 4);
+    stl_le_p((void*)jmp_addr, addr - (jmp_addr + 4));
+    /* no need to flush icache explicitly */
+}
+#elif defined(__s390x__)
+static inline void tb_set_jmp_target1(uintptr_t jmp_addr, uintptr_t addr)
+{
+    /* patch the branch destination */
+    intptr_t disp = addr - (jmp_addr - 2);
+    stl_be_p((void*)jmp_addr, disp / 2);
     /* no need to flush icache explicitly */
 }
 #elif defined(__aarch64__)
@@ -265,7 +268,7 @@ static inline void tb_set_jmp_target1(uintptr_t jmp_addr, uintptr_t addr)
     __asm __volatile__ ("swi 0x9f0002" : : "r" (_beg), "r" (_end), "r" (_flg));
 #endif
 }
-#elif defined(__sparc__)
+#elif defined(__sparc__) || defined(__mips__)
 void tb_set_jmp_target1(uintptr_t jmp_addr, uintptr_t addr);
 #else
 #error tb_set_jmp_target1 is missing
@@ -340,29 +343,6 @@ bool io_mem_write(struct MemoryRegion *mr, hwaddr addr,
 
 void tlb_fill(CPUState *cpu, target_ulong addr, int is_write, int mmu_idx,
               uintptr_t retaddr);
-
-uint8_t helper_ldb_cmmu(CPUArchState *env, target_ulong addr, int mmu_idx);
-uint16_t helper_ldw_cmmu(CPUArchState *env, target_ulong addr, int mmu_idx);
-uint32_t helper_ldl_cmmu(CPUArchState *env, target_ulong addr, int mmu_idx);
-uint64_t helper_ldq_cmmu(CPUArchState *env, target_ulong addr, int mmu_idx);
-
-#define ACCESS_TYPE (NB_MMU_MODES + 1)
-#define MEMSUFFIX _code
-
-#define DATA_SIZE 1
-#include "exec/softmmu_header.h"
-
-#define DATA_SIZE 2
-#include "exec/softmmu_header.h"
-
-#define DATA_SIZE 4
-#include "exec/softmmu_header.h"
-
-#define DATA_SIZE 8
-#include "exec/softmmu_header.h"
-
-#undef ACCESS_TYPE
-#undef MEMSUFFIX
 
 #endif
 

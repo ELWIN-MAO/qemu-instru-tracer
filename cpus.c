@@ -26,6 +26,7 @@
 #include "config-host.h"
 
 #include "monitor/monitor.h"
+#include "qapi/qmp/qerror.h"
 #include "sysemu/sysemu.h"
 #include "exec/gdbstub.h"
 #include "sysemu/dma.h"
@@ -38,6 +39,7 @@
 #include "qemu/main-loop.h"
 #include "qemu/bitmap.h"
 #include "qemu/seqlock.h"
+#include "qapi-event.h"
 
 #ifndef _WIN32
 #include "qemu/compatfd.h"
@@ -347,7 +349,7 @@ void qtest_clock_warp(int64_t dest)
     assert(qtest_enabled());
     while (clock < dest) {
         int64_t deadline = qemu_clock_deadline_ns_all(QEMU_CLOCK_VIRTUAL);
-        int64_t warp = MIN(dest - clock, deadline);
+        int64_t warp = qemu_soonest_timeout(dest - clock, deadline);
         seqlock_write_lock(&timers_state.vm_clock_seqlock);
         qemu_icount_bias += warp;
         seqlock_write_unlock(&timers_state.vm_clock_seqlock);
@@ -430,8 +432,7 @@ static const VMStateDescription vmstate_timers = {
     .name = "timer",
     .version_id = 2,
     .minimum_version_id = 1,
-    .minimum_version_id_old = 1,
-    .fields      = (VMStateField[]) {
+    .fields = (VMStateField[]) {
         VMSTATE_INT64(cpu_ticks_offset, TimersState),
         VMSTATE_INT64(dummy, TimersState),
         VMSTATE_INT64_V(cpu_clock_offset, TimersState, 2),
@@ -531,7 +532,7 @@ static int do_vm_stop(RunState state)
         pause_all_vcpus();
         runstate_set(state);
         vm_state_notify(0, state);
-        monitor_protocol_event(QEVENT_STOP, NULL);
+        qapi_event_send_stop(&error_abort);
     }
 
     bdrv_drain_all();
@@ -1207,6 +1208,7 @@ void cpu_stop_current(void)
 int vm_stop(RunState state)
 {
     if (qemu_in_vcpu_thread()) {
+        qemu_system_vmstop_request_prepare();
         qemu_system_vmstop_request(state);
         /*
          * FIXME: should not return to device code in case
@@ -1311,20 +1313,6 @@ static void tcg_exec_all(void)
         }
     }
     exit_request = 0;
-}
-
-void set_numa_modes(void)
-{
-    CPUState *cpu;
-    int i;
-
-    CPU_FOREACH(cpu) {
-        for (i = 0; i < nb_numa_nodes; i++) {
-            if (test_bit(cpu->cpu_index, node_cpumask[i])) {
-                cpu->numa_node = i;
-            }
-        }
-    }
 }
 
 void list_cpus(FILE *f, fprintf_function cpu_fprintf, const char *optarg)
@@ -1454,7 +1442,7 @@ void qmp_pmemsave(int64_t addr, int64_t size, const char *filename,
         l = sizeof(buf);
         if (l > size)
             l = size;
-        cpu_physical_memory_rw(addr, buf, l, 0);
+        cpu_physical_memory_read(addr, buf, l);
         if (fwrite(buf, 1, l, f) != l) {
             error_set(errp, QERR_IO_ERROR);
             goto exit;

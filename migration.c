@@ -98,7 +98,7 @@ static void process_incoming_migration_co(void *opaque)
     qemu_fclose(f);
     free_xbzrle_decoded_buf();
     if (ret < 0) {
-        fprintf(stderr, "load of migration failed\n");
+        error_report("load of migration failed: %s", strerror(-ret));
         exit(EXIT_FAILURE);
     }
     qemu_announce_self();
@@ -133,7 +133,7 @@ void process_incoming_migration(QEMUFile *f)
  * the choice of nanoseconds is because it is the maximum resolution that
  * get_clock() can achieve. It is an internal measure. All user-visible
  * units must be in seconds */
-static uint64_t max_downtime = 30000000;
+static uint64_t max_downtime = 300000000;
 
 uint64_t migrate_max_downtime(void)
 {
@@ -174,6 +174,7 @@ static void get_xbzrle_cache_stats(MigrationInfo *info)
         info->xbzrle_cache->bytes = xbzrle_mig_bytes_transferred();
         info->xbzrle_cache->pages = xbzrle_mig_pages_transferred();
         info->xbzrle_cache->cache_miss = xbzrle_mig_pages_cache_miss();
+        info->xbzrle_cache->cache_miss_rate = xbzrle_mig_cache_miss_rate();
         info->xbzrle_cache->overflow = xbzrle_mig_pages_overflow();
     }
 }
@@ -215,6 +216,7 @@ MigrationInfo *qmp_query_migrate(Error **errp)
         info->ram->normal_bytes = norm_mig_bytes_transferred();
         info->ram->dirty_pages_rate = s->dirty_pages_rate;
         info->ram->mbps = s->mbps;
+        info->ram->dirty_sync_count = s->dirty_sync_count;
 
         if (blk_mig_active()) {
             info->has_disk = true;
@@ -248,6 +250,7 @@ MigrationInfo *qmp_query_migrate(Error **errp)
         info->ram->normal = norm_mig_pages_transferred();
         info->ram->normal_bytes = norm_mig_bytes_transferred();
         info->ram->mbps = s->mbps;
+        info->ram->dirty_sync_count = s->dirty_sync_count;
         break;
     case MIG_STATE_ERROR:
         info->has_status = true;
@@ -416,6 +419,11 @@ void qmp_migrate(const char *uri, bool has_blk, bool blk,
     if (s->state == MIG_STATE_ACTIVE || s->state == MIG_STATE_SETUP ||
         s->state == MIG_STATE_CANCELLING) {
         error_set(errp, QERR_MIGRATION_ACTIVE);
+        return;
+    }
+
+    if (runstate_check(RUN_STATE_INMIGRATE)) {
+        error_setg(errp, "Guest is waiting for an incoming migration");
         return;
     }
 
@@ -654,8 +662,13 @@ static void *migration_thread(void *opaque)
     qemu_mutex_lock_iothread();
     if (s->state == MIG_STATE_COMPLETED) {
         int64_t end_time = qemu_clock_get_ms(QEMU_CLOCK_REALTIME);
+        uint64_t transferred_bytes = qemu_ftell(s->file);
         s->total_time = end_time - s->total_time;
         s->downtime = end_time - start_time;
+        if (s->total_time) {
+            s->mbps = (((double) transferred_bytes * 8.0) /
+                       ((double) s->total_time)) / 1000;
+        }
         runstate_set(RUN_STATE_POSTMIGRATE);
     } else {
         if (old_vm_running) {

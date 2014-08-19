@@ -43,7 +43,7 @@ unsigned long reserved_va;
 #endif
 
 static const char *interp_prefix = CONFIG_QEMU_INTERP_PREFIX;
-const char *qemu_uname_release = CONFIG_UNAME_RELEASE;
+const char *qemu_uname_release;
 extern char **environ;
 enum BSDType bsd_type;
 
@@ -1003,10 +1003,8 @@ int main(int argc, char **argv)
     cpu->opaque = ts;
 
 #if defined(TARGET_I386)
-    cpu_x86_set_cpl(env, 3);
-
     env->cr[0] = CR0_PG_MASK | CR0_WP_MASK | CR0_PE_MASK;
-    env->hflags |= HF_PE_MASK;
+    env->hflags |= HF_PE_MASK | HF_CPL_MASK;
     if (env->features[FEAT_1_EDX] & CPUID_SSE) {
         env->cr[4] |= CR4_OSFXSR_MASK;
         env->hflags |= HF_OSFXSR_MASK;

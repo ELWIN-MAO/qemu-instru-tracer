@@ -346,9 +346,6 @@ static void ppc_prep_reset(void *opaque)
     PowerPCCPU *cpu = opaque;
 
     cpu_reset(CPU(cpu));
-
-    /* Reset address */
-    cpu->env.nip = 0xfffffffc;
 }
 
 static const MemoryRegionPortio prep_portio_list[] = {
@@ -361,27 +358,27 @@ static const MemoryRegionPortio prep_portio_list[] = {
     PORTIO_END_OF_LIST(),
 };
 
+static PortioList prep_port_list;
+
 /* PowerPC PREP hardware initialisation */
-static void ppc_prep_init(QEMUMachineInitArgs *args)
+static void ppc_prep_init(MachineState *machine)
 {
-    ram_addr_t ram_size = args->ram_size;
-    const char *cpu_model = args->cpu_model;
-    const char *kernel_filename = args->kernel_filename;
-    const char *kernel_cmdline = args->kernel_cmdline;
-    const char *initrd_filename = args->initrd_filename;
-    const char *boot_device = args->boot_order;
+    ram_addr_t ram_size = machine->ram_size;
+    const char *cpu_model = machine->cpu_model;
+    const char *kernel_filename = machine->kernel_filename;
+    const char *kernel_cmdline = machine->kernel_cmdline;
+    const char *initrd_filename = machine->initrd_filename;
+    const char *boot_device = machine->boot_order;
     MemoryRegion *sysmem = get_system_memory();
     PowerPCCPU *cpu = NULL;
     CPUPPCState *env = NULL;
     nvram_t nvram;
     M48t59State *m48t59;
-    PortioList *port_list = g_new(PortioList, 1);
 #if 0
     MemoryRegion *xcsr = g_new(MemoryRegion, 1);
 #endif
     int linux_boot, i, nb_nics1;
     MemoryRegion *ram = g_new(MemoryRegion, 1);
-    MemoryRegion *vga = g_new(MemoryRegion, 1);
     uint32_t kernel_base, initrd_base;
     long kernel_size, initrd_size;
     DeviceState *dev;
@@ -420,8 +417,7 @@ static void ppc_prep_init(QEMUMachineInitArgs *args)
     }
 
     /* allocate RAM */
-    memory_region_init_ram(ram, NULL, "ppc_prep.ram", ram_size);
-    vmstate_register_ram_global(ram);
+    memory_region_allocate_system_memory(ram, NULL, "ppc_prep.ram", ram_size);
     memory_region_add_subregion(sysmem, 0, ram);
 
     if (linux_boot) {
@@ -507,14 +503,6 @@ static void ppc_prep_init(QEMUMachineInitArgs *args)
 
     /* init basic PC hardware */
     pci_vga_init(pci_bus);
-    /* Open Hack'Ware hack: PCI BAR#0 is programmed to 0xf0000000.
-     * While bios will access framebuffer at 0xf0000000, real physical
-     * address is 0xf0000000 + 0xc0000000 (PCI memory base).
-     * Alias the wrong memory accesses to the right place.
-     */
-    memory_region_init_alias(vga, NULL, "vga-alias", pci_address_space(pci),
-                             0xf0000000, 0x1000000);
-    memory_region_add_subregion_overlap(sysmem, 0xf0000000, vga, 10);
 
     nb_nics1 = nb_nics;
     if (nb_nics1 > NE2000_NB_MAX)
@@ -542,8 +530,8 @@ static void ppc_prep_init(QEMUMachineInitArgs *args)
     cpu = POWERPC_CPU(first_cpu);
     sysctrl->reset_irq = cpu->env.irq_inputs[PPC6xx_INPUT_HRESET];
 
-    portio_list_init(port_list, NULL, prep_portio_list, sysctrl, "prep");
-    portio_list_add(port_list, isa_address_space_io(isa), 0x0);
+    portio_list_init(&prep_port_list, NULL, prep_portio_list, sysctrl, "prep");
+    portio_list_add(&prep_port_list, isa_address_space_io(isa), 0x0);
 
     /* PowerPC control and status register group */
 #if 0

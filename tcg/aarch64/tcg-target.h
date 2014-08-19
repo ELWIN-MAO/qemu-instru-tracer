@@ -13,6 +13,7 @@
 #ifndef TCG_TARGET_AARCH64
 #define TCG_TARGET_AARCH64 1
 
+#define TCG_TARGET_INSN_UNIT_SIZE  4
 #undef TCG_TARGET_STACK_GROWSUP
 
 typedef enum {
@@ -68,6 +69,7 @@ typedef enum {
 #define TCG_TARGET_HAS_muls2_i32        0
 #define TCG_TARGET_HAS_muluh_i32        0
 #define TCG_TARGET_HAS_mulsh_i32        0
+#define TCG_TARGET_HAS_trunc_shr_i32    0
 
 #define TCG_TARGET_HAS_div_i64          1
 #define TCG_TARGET_HAS_rem_i64          1
@@ -96,8 +98,6 @@ typedef enum {
 #define TCG_TARGET_HAS_muls2_i64        0
 #define TCG_TARGET_HAS_muluh_i64        1
 #define TCG_TARGET_HAS_mulsh_i64        1
-
-#define TCG_TARGET_HAS_new_ldst         1
 
 static inline void flush_icache_range(uintptr_t start, uintptr_t stop)
 {

@@ -143,12 +143,12 @@ static void dma_bdrv_cb(void *opaque, int ret)
 
     dbs->acb = NULL;
     dbs->sector_num += dbs->iov.size / 512;
-    dma_bdrv_unmap(dbs);
 
     if (dbs->sg_cur_index == dbs->sg->nsg || ret < 0) {
         dma_complete(dbs, ret);
         return;
     }
+    dma_bdrv_unmap(dbs);
 
     while (dbs->sg_cur_index < dbs->sg->nsg) {
         cur_addr = dbs->sg->sg[dbs->sg_cur_index].base + dbs->sg_cur_byte;
@@ -168,6 +168,10 @@ static void dma_bdrv_cb(void *opaque, int ret)
         trace_dma_map_wait(dbs);
         cpu_register_map_client(dbs, continue_after_map_failure);
         return;
+    }
+
+    if (dbs->iov.size & ~BDRV_SECTOR_MASK) {
+        qemu_iovec_discard_back(&dbs->iov, dbs->iov.size & ~BDRV_SECTOR_MASK);
     }
 
     dbs->acb = dbs->io_func(dbs->bs, dbs->sector_num, &dbs->iov,

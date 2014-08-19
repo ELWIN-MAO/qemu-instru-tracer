@@ -19,13 +19,13 @@
 
 #include "cpu.h"
 #include "disas/disas.h"
-#include "helper.h"
+#include "exec/helper-proto.h"
 #include "tcg-op.h"
 
+#include "exec/cpu_ldst.h"
 #include "hw/lm32/lm32_pic.h"
 
-#define GEN_HELPER 1
-#include "helper.h"
+#include "exec/helper-gen.h"
 
 #define DISAS_LM32 1
 #if DISAS_LM32

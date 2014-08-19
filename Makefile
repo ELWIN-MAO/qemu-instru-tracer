@@ -45,19 +45,19 @@ endif
 endif
 
 GENERATED_HEADERS = config-host.h qemu-options.def
-GENERATED_HEADERS += qmp-commands.h qapi-types.h qapi-visit.h
-GENERATED_SOURCES += qmp-marshal.c qapi-types.c qapi-visit.c
+GENERATED_HEADERS += qmp-commands.h qapi-types.h qapi-visit.h qapi-event.h
+GENERATED_SOURCES += qmp-marshal.c qapi-types.c qapi-visit.c qapi-event.c
 
 GENERATED_HEADERS += trace/generated-events.h
 GENERATED_SOURCES += trace/generated-events.c
 
 GENERATED_HEADERS += trace/generated-tracers.h
-ifeq ($(TRACE_BACKEND),dtrace)
+ifeq ($(findstring dtrace,$(TRACE_BACKENDS)),dtrace)
 GENERATED_HEADERS += trace/generated-tracers-dtrace.h
 endif
 GENERATED_SOURCES += trace/generated-tracers.c
 
-ifeq ($(TRACE_BACKEND),ust)
+ifeq ($(findstring ust,$(TRACE_BACKENDS)),ust)
 GENERATED_HEADERS += trace/generated-ust-provider.h
 GENERATED_SOURCES += trace/generated-ust.c
 endif
@@ -148,10 +148,6 @@ endif
 
 all: $(DOCS) $(TOOLS) $(HELPERS-y) recurse-all modules
 
-vl.o: QEMU_CFLAGS+=$(GPROF_CFLAGS)
-
-vl.o: QEMU_CFLAGS+=$(SDL_CFLAGS)
-
 config-host.h: config-host.h-timestamp
 config-host.h-timestamp: config-host.mak
 qemu-options.def: $(SRC_PATH)/qemu-options.hx
@@ -195,8 +191,6 @@ ALL_SUBDIRS=$(TARGET_DIRS) $(patsubst %,pc-bios/%, $(ROMS))
 
 recurse-all: $(SUBDIR_RULES) $(ROMSUBDIR_RULES)
 
-bt-host.o: QEMU_CFLAGS += $(BLUEZ_CFLAGS)
-
 $(BUILD_DIR)/version.o: $(SRC_PATH)/version.rc $(BUILD_DIR)/config-host.h | $(BUILD_DIR)/version.lo
 	$(call quiet-command,$(WINDRES) -I$(BUILD_DIR) -o $@ $<,"  RC    version.o")
 $(BUILD_DIR)/version.lo: $(SRC_PATH)/version.rc $(BUILD_DIR)/config-host.h
@@ -208,7 +202,7 @@ Makefile: $(version-obj-y) $(version-lobj-y)
 # Build libraries
 
 libqemustub.a: $(stub-obj-y)
-libqemuutil.a: $(util-obj-y) qapi-types.o qapi-visit.o
+libqemuutil.a: $(util-obj-y) qapi-types.o qapi-visit.o qapi-event.o
 
 block-modules = $(foreach o,$(block-obj-m),"$(basename $(subst /,-,$o))",) NULL
 util/module.o-cflags = -D'CONFIG_BLOCK_MODULES=$(block-modules)'
@@ -238,23 +232,44 @@ qapi-py = $(SRC_PATH)/scripts/qapi.py $(SRC_PATH)/scripts/ordereddict.py
 
 qga/qapi-generated/qga-qapi-types.c qga/qapi-generated/qga-qapi-types.h :\
 $(SRC_PATH)/qga/qapi-schema.json $(SRC_PATH)/scripts/qapi-types.py $(qapi-py)
-	$(call quiet-command,$(PYTHON) $(SRC_PATH)/scripts/qapi-types.py $(gen-out-type) -o qga/qapi-generated -p "qga-" < $<, "  GEN   $@")
+	$(call quiet-command,$(PYTHON) $(SRC_PATH)/scripts/qapi-types.py \
+		$(gen-out-type) -o qga/qapi-generated -p "qga-" -i $<, \
+		"  GEN   $@")
 qga/qapi-generated/qga-qapi-visit.c qga/qapi-generated/qga-qapi-visit.h :\
 $(SRC_PATH)/qga/qapi-schema.json $(SRC_PATH)/scripts/qapi-visit.py $(qapi-py)
-	$(call quiet-command,$(PYTHON) $(SRC_PATH)/scripts/qapi-visit.py $(gen-out-type) -o qga/qapi-generated -p "qga-" < $<, "  GEN   $@")
+	$(call quiet-command,$(PYTHON) $(SRC_PATH)/scripts/qapi-visit.py \
+		$(gen-out-type) -o qga/qapi-generated -p "qga-" -i $<, \
+		"  GEN   $@")
 qga/qapi-generated/qga-qmp-commands.h qga/qapi-generated/qga-qmp-marshal.c :\
 $(SRC_PATH)/qga/qapi-schema.json $(SRC_PATH)/scripts/qapi-commands.py $(qapi-py)
-	$(call quiet-command,$(PYTHON) $(SRC_PATH)/scripts/qapi-commands.py $(gen-out-type) -o qga/qapi-generated -p "qga-" < $<, "  GEN   $@")
+	$(call quiet-command,$(PYTHON) $(SRC_PATH)/scripts/qapi-commands.py \
+		$(gen-out-type) -o qga/qapi-generated -p "qga-" -i $<, \
+		"  GEN   $@")
+
+qapi-modules = $(SRC_PATH)/qapi-schema.json $(SRC_PATH)/qapi/common.json \
+               $(SRC_PATH)/qapi/block.json $(SRC_PATH)/qapi/block-core.json \
+               $(SRC_PATH)/qapi/event.json
 
 qapi-types.c qapi-types.h :\
-$(SRC_PATH)/qapi-schema.json $(SRC_PATH)/scripts/qapi-types.py $(qapi-py)
-	$(call quiet-command,$(PYTHON) $(SRC_PATH)/scripts/qapi-types.py $(gen-out-type) -o "." -b < $<, "  GEN   $@")
+$(qapi-modules) $(SRC_PATH)/scripts/qapi-types.py $(qapi-py)
+	$(call quiet-command,$(PYTHON) $(SRC_PATH)/scripts/qapi-types.py \
+		$(gen-out-type) -o "." -b -i $<, \
+		"  GEN   $@")
 qapi-visit.c qapi-visit.h :\
-$(SRC_PATH)/qapi-schema.json $(SRC_PATH)/scripts/qapi-visit.py $(qapi-py)
-	$(call quiet-command,$(PYTHON) $(SRC_PATH)/scripts/qapi-visit.py $(gen-out-type) -o "." -b < $<, "  GEN   $@")
+$(qapi-modules) $(SRC_PATH)/scripts/qapi-visit.py $(qapi-py)
+	$(call quiet-command,$(PYTHON) $(SRC_PATH)/scripts/qapi-visit.py \
+		$(gen-out-type) -o "." -b -i $<, \
+		"  GEN   $@")
+qapi-event.c qapi-event.h :\
+$(qapi-modules) $(SRC_PATH)/scripts/qapi-event.py $(qapi-py)
+	$(call quiet-command,$(PYTHON) $(SRC_PATH)/scripts/qapi-event.py \
+		$(gen-out-type) -o "." -b -i $<, \
+		"  GEN   $@")
 qmp-commands.h qmp-marshal.c :\
-$(SRC_PATH)/qapi-schema.json $(SRC_PATH)/scripts/qapi-commands.py $(qapi-py)
-	$(call quiet-command,$(PYTHON) $(SRC_PATH)/scripts/qapi-commands.py $(gen-out-type) -m -o "." < $<, "  GEN   $@")
+$(qapi-modules) $(SRC_PATH)/scripts/qapi-commands.py $(qapi-py)
+	$(call quiet-command,$(PYTHON) $(SRC_PATH)/scripts/qapi-commands.py \
+		$(gen-out-type) -o "." -m -i $<, \
+		"  GEN   $@")
 
 QGALIB_GEN=$(addprefix qga/qapi-generated/, qga-qapi-types.h qga-qapi-visit.h qga-qmp-commands.h)
 $(qga-obj-y) qemu-ga.o: $(QGALIB_GEN)
@@ -329,7 +344,8 @@ multiboot.bin linuxboot.bin kvmvapic.bin \
 s390-zipl.rom \
 s390-ccw.img \
 spapr-rtas.bin slof.bin \
-palcode-clipper
+palcode-clipper \
+u-boot.e500
 else
 BLOBS=
 endif
@@ -370,19 +386,19 @@ install-sysconfig: install-datadir install-confdir
 
 install: all $(if $(BUILD_DOCS),install-doc) install-sysconfig \
 install-datadir install-localstatedir
-	$(INSTALL_DIR) "$(DESTDIR)$(bindir)"
 ifneq ($(TOOLS),)
-	$(INSTALL_PROG) $(STRIP_OPT) $(TOOLS) "$(DESTDIR)$(bindir)"
+	$(call install-prog,$(TOOLS),$(DESTDIR)$(bindir))
 endif
 ifneq ($(CONFIG_MODULES),)
 	$(INSTALL_DIR) "$(DESTDIR)$(qemu_moddir)"
-	for s in $(patsubst %.mo,%$(DSOSUF),$(modules-m)); do \
-		$(INSTALL_PROG) $(STRIP_OPT) $$s "$(DESTDIR)$(qemu_moddir)/$$(echo $$s | tr / -)"; \
+	for s in $(modules-m:.mo=$(DSOSUF)); do \
+		t="$(DESTDIR)$(qemu_moddir)/$$(echo $$s | tr / -)"; \
+		$(INSTALL_LIB) $$s "$$t"; \
+		test -z "$(STRIP)" || $(STRIP) "$$t"; \
 	done
 endif
 ifneq ($(HELPERS-y),)
-	$(INSTALL_DIR) "$(DESTDIR)$(libexecdir)"
-	$(INSTALL_PROG) $(STRIP_OPT) $(HELPERS-y) "$(DESTDIR)$(libexecdir)"
+	$(call install-prog,$(HELPERS-y),$(DESTDIR)$(libexecdir))
 endif
 ifneq ($(BLOBS),)
 	set -e; for x in $(BLOBS); do \

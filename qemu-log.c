@@ -117,10 +117,6 @@ const QEMULogItem qemu_log_items[] = {
     { LOG_GUEST_ERROR, "guest_errors",
       "log when the guest OS does something invalid (eg accessing a\n"
       "non-existent register)" },
-      
-    { CPU_LOG_FUNC, "func",
-      "show function call and return" },   
-      
     { 0, NULL, NULL },
 };
 

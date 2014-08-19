@@ -2059,7 +2059,7 @@ static void cirrus_vga_mem_write(void *opaque,
 	}
     } else {
 #ifdef DEBUG_CIRRUS
-        printf("cirrus: mem_writeb " TARGET_FMT_plx " value %02x\n", addr,
+        printf("cirrus: mem_writeb " TARGET_FMT_plx " value 0x%02" PRIu64 "\n", addr,
                mem_value);
 #endif
     }
@@ -2594,7 +2594,7 @@ static void cirrus_vga_ioport_write(void *opaque, hwaddr addr, uint64_t val,
 	break;
     case 0x3c5:
 #ifdef DEBUG_VGA_REG
-	printf("vga: write SR%x = 0x%02x\n", s->sr_index, val);
+	printf("vga: write SR%x = 0x%02" PRIu64 "\n", s->sr_index, val);
 #endif
 	cirrus_vga_write_sr(c, val);
         break;
@@ -2619,7 +2619,7 @@ static void cirrus_vga_ioport_write(void *opaque, hwaddr addr, uint64_t val,
 	break;
     case 0x3cf:
 #ifdef DEBUG_VGA_REG
-	printf("vga: write GR%x = 0x%02x\n", s->gr_index, val);
+	printf("vga: write GR%x = 0x%02" PRIu64 "\n", s->gr_index, val);
 #endif
 	cirrus_vga_write_gr(c, s->gr_index, val);
 	break;
@@ -2630,7 +2630,7 @@ static void cirrus_vga_ioport_write(void *opaque, hwaddr addr, uint64_t val,
     case 0x3b5:
     case 0x3d5:
 #ifdef DEBUG_VGA_REG
-	printf("vga: write CR%x = 0x%02x\n", s->cr_index, val);
+	printf("vga: write CR%x = 0x%02"PRIu64"\n", s->cr_index, val);
 #endif
 	cirrus_vga_write_cr(c, val);
 	break;
@@ -2702,9 +2702,8 @@ static const VMStateDescription vmstate_cirrus_vga = {
     .name = "cirrus_vga",
     .version_id = 2,
     .minimum_version_id = 1,
-    .minimum_version_id_old = 1,
     .post_load = cirrus_post_load,
-    .fields      = (VMStateField []) {
+    .fields = (VMStateField[]) {
         VMSTATE_UINT32(vga.latch, CirrusVGAState),
         VMSTATE_UINT8(vga.sr_index, CirrusVGAState),
         VMSTATE_BUFFER(vga.sr, CirrusVGAState),
@@ -2742,8 +2741,7 @@ static const VMStateDescription vmstate_pci_cirrus_vga = {
     .name = "cirrus_vga",
     .version_id = 2,
     .minimum_version_id = 2,
-    .minimum_version_id_old = 2,
-    .fields      = (VMStateField []) {
+    .fields = (VMStateField[]) {
         VMSTATE_PCI_DEVICE(dev, PCICirrusVGAState),
         VMSTATE_STRUCT(cirrus_vga, PCICirrusVGAState, 0,
                        vmstate_cirrus_vga, CirrusVGAState),
@@ -2913,7 +2911,15 @@ static void isa_cirrus_vga_realizefn(DeviceState *dev, Error **errp)
     ISACirrusVGAState *d = ISA_CIRRUS_VGA(dev);
     VGACommonState *s = &d->cirrus_vga.vga;
 
-    vga_common_init(s, OBJECT(dev));
+    /* follow real hardware, cirrus card emulated has 4 MB video memory.
+       Also accept 8 MB/16 MB for backward compatibility. */
+    if (s->vram_size_mb != 4 && s->vram_size_mb != 8 &&
+        s->vram_size_mb != 16) {
+        error_setg(errp, "Invalid cirrus_vga ram size '%u'",
+                   s->vram_size_mb);
+        return;
+    }
+    vga_common_init(s, OBJECT(dev), true);
     cirrus_init_common(&d->cirrus_vga, OBJECT(dev), CIRRUS_ID_CLGD5430, 0,
                        isa_address_space(isadev),
                        isa_address_space_io(isadev));
@@ -2959,8 +2965,16 @@ static int pci_cirrus_vga_initfn(PCIDevice *dev)
      PCIDeviceClass *pc = PCI_DEVICE_GET_CLASS(dev);
      int16_t device_id = pc->device_id;
 
+     /* follow real hardware, cirrus card emulated has 4 MB video memory.
+       Also accept 8 MB/16 MB for backward compatibility. */
+     if (s->vga.vram_size_mb != 4 && s->vga.vram_size_mb != 8 &&
+         s->vga.vram_size_mb != 16) {
+         error_report("Invalid cirrus_vga ram size '%u'",
+                      s->vga.vram_size_mb);
+         return -1;
+     }
      /* setup VGA */
-     vga_common_init(&s->vga, OBJECT(dev));
+     vga_common_init(&s->vga, OBJECT(dev), true);
      cirrus_init_common(s, OBJECT(dev), device_id, 1, pci_address_space(dev),
                         pci_address_space_io(dev));
      s->vga.con = graphic_console_init(DEVICE(dev), 0, s->vga.hw_ops, &s->vga);

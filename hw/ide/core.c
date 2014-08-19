@@ -499,6 +499,18 @@ static void ide_rw_error(IDEState *s) {
     ide_set_irq(s->bus);
 }
 
+static bool ide_sect_range_ok(IDEState *s,
+                              uint64_t sector, uint64_t nb_sectors)
+{
+    uint64_t total_sectors;
+
+    bdrv_get_geometry(s->bs, &total_sectors);
+    if (sector > total_sectors || nb_sectors > total_sectors - sector) {
+        return false;
+    }
+    return true;
+}
+
 static void ide_sector_read_cb(void *opaque, int ret)
 {
     IDEState *s = opaque;
@@ -554,6 +566,11 @@ void ide_sector_read(IDEState *s)
     printf("sector=%" PRId64 "\n", sector_num);
 #endif
 
+    if (!ide_sect_range_ok(s, sector_num, n)) {
+        ide_rw_error(s);
+        return;
+    }
+
     s->iov.iov_base = s->io_buffer;
     s->iov.iov_len  = n * BDRV_SECTOR_SIZE;
     qemu_iovec_init_external(&s->qiov, &s->iov, 1);
@@ -596,10 +613,10 @@ static int ide_handle_rw_error(IDEState *s, int error, int op)
     bool is_read = (op & BM_STATUS_RETRY_READ) != 0;
     BlockErrorAction action = bdrv_get_error_action(s->bs, is_read, error);
 
-    if (action == BDRV_ACTION_STOP) {
+    if (action == BLOCK_ERROR_ACTION_STOP) {
         s->bus->dma->ops->set_unit(s->bus->dma, s->unit);
         s->bus->error_status = op;
-    } else if (action == BDRV_ACTION_REPORT) {
+    } else if (action == BLOCK_ERROR_ACTION_REPORT) {
         if (op & BM_STATUS_DMA_RETRY) {
             dma_buf_commit(s);
             ide_dma_error(s);
@@ -608,7 +625,7 @@ static int ide_handle_rw_error(IDEState *s, int error, int op)
         }
     }
     bdrv_error_action(s->bs, action, is_read, error);
-    return action != BDRV_ACTION_IGNORE;
+    return action != BLOCK_ERROR_ACTION_IGNORE;
 }
 
 void ide_dma_cb(void *opaque, int ret)
@@ -670,6 +687,12 @@ void ide_dma_cb(void *opaque, int ret)
     printf("ide_dma_cb: sector_num=%" PRId64 " n=%d, cmd_cmd=%d\n",
            sector_num, n, s->dma_cmd);
 #endif
+
+    if (!ide_sect_range_ok(s, sector_num, n)) {
+        dma_buf_commit(s);
+        ide_dma_error(s);
+        return;
+    }
 
     switch (s->dma_cmd) {
     case IDE_DMA_READ:
@@ -788,6 +811,11 @@ void ide_sector_write(IDEState *s)
     n = s->nsector;
     if (n > s->req_nb_sectors) {
         n = s->req_nb_sectors;
+    }
+
+    if (!ide_sect_range_ok(s, sector_num, n)) {
+        ide_rw_error(s);
+        return;
     }
 
     s->iov.iov_base = s->io_buffer;
@@ -2342,8 +2370,7 @@ static const VMStateDescription vmstate_ide_atapi_gesn_state = {
     .name ="ide_drive/atapi/gesn_state",
     .version_id = 1,
     .minimum_version_id = 1,
-    .minimum_version_id_old = 1,
-    .fields = (VMStateField []) {
+    .fields = (VMStateField[]) {
         VMSTATE_BOOL(events.new_media, IDEState),
         VMSTATE_BOOL(events.eject_request, IDEState),
         VMSTATE_END_OF_LIST()
@@ -2354,7 +2381,6 @@ static const VMStateDescription vmstate_ide_tray_state = {
     .name = "ide_drive/tray_state",
     .version_id = 1,
     .minimum_version_id = 1,
-    .minimum_version_id_old = 1,
     .fields = (VMStateField[]) {
         VMSTATE_BOOL(tray_open, IDEState),
         VMSTATE_BOOL(tray_locked, IDEState),
@@ -2366,10 +2392,9 @@ static const VMStateDescription vmstate_ide_drive_pio_state = {
     .name = "ide_drive/pio_state",
     .version_id = 1,
     .minimum_version_id = 1,
-    .minimum_version_id_old = 1,
     .pre_save = ide_drive_pio_pre_save,
     .post_load = ide_drive_pio_post_load,
-    .fields      = (VMStateField []) {
+    .fields = (VMStateField[]) {
         VMSTATE_INT32(req_nb_sectors, IDEState),
         VMSTATE_VARRAY_INT32(io_buffer, IDEState, io_buffer_total_len, 1,
 			     vmstate_info_uint8, uint8_t),
@@ -2386,9 +2411,8 @@ const VMStateDescription vmstate_ide_drive = {
     .name = "ide_drive",
     .version_id = 3,
     .minimum_version_id = 0,
-    .minimum_version_id_old = 0,
     .post_load = ide_drive_post_load,
-    .fields      = (VMStateField []) {
+    .fields = (VMStateField[]) {
         VMSTATE_INT32(mult_sectors, IDEState),
         VMSTATE_INT32(identify_set, IDEState),
         VMSTATE_BUFFER_TEST(identify_data, IDEState, is_identify_set),
@@ -2431,8 +2455,7 @@ static const VMStateDescription vmstate_ide_error_status = {
     .name ="ide_bus/error",
     .version_id = 1,
     .minimum_version_id = 1,
-    .minimum_version_id_old = 1,
-    .fields = (VMStateField []) {
+    .fields = (VMStateField[]) {
         VMSTATE_INT32(error_status, IDEBus),
         VMSTATE_END_OF_LIST()
     }
@@ -2442,8 +2465,7 @@ const VMStateDescription vmstate_ide_bus = {
     .name = "ide_bus",
     .version_id = 1,
     .minimum_version_id = 1,
-    .minimum_version_id_old = 1,
-    .fields      = (VMStateField []) {
+    .fields = (VMStateField[]) {
         VMSTATE_UINT8(cmd, IDEBus),
         VMSTATE_UINT8(unit, IDEBus),
         VMSTATE_END_OF_LIST()

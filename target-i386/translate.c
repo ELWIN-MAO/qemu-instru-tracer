@@ -27,10 +27,10 @@
 #include "cpu.h"
 #include "disas/disas.h"
 #include "tcg-op.h"
+#include "exec/cpu_ldst.h"
 
-#include "helper.h"
-#define GEN_HELPER 1
-#include "helper.h"
+#include "exec/helper-proto.h"
+#include "exec/helper-gen.h"
 
 #define PREFIX_REPZ   0x01
 #define PREFIX_REPNZ  0x02
@@ -1504,14 +1504,6 @@ static void gen_shift_rm_im(DisasContext *s, TCGMemOp ot, int op1, int op2,
         tcg_gen_mov_tl(cpu_cc_dst, cpu_T[0]);
         set_cc_op(s, (is_right ? CC_OP_SARB : CC_OP_SHLB) + ot);
     }
-}
-
-static inline void tcg_gen_lshift(TCGv ret, TCGv arg1, target_long arg2)
-{
-    if (arg2 >= 0)
-        tcg_gen_shli_tl(ret, arg1, arg2);
-    else
-        tcg_gen_shri_tl(ret, arg1, -arg2);
 }
 
 static void gen_rot_rm_T1(DisasContext *s, TCGMemOp ot, int op1, int is_right)
@@ -4421,9 +4413,6 @@ static target_ulong disas_insn(CPUX86State *env, DisasContext *s,
     s->override = -1;
     rex_w = -1;
     rex_r = 0;
-    
-    s->tb->type=TB_DEFAULT;
-    
 #ifdef TARGET_X86_64
     s->rex_x = 0;
     s->rex_b = 0;
@@ -4940,9 +4929,7 @@ static target_ulong disas_insn(CPUX86State *env, DisasContext *s,
             gen_inc(s, ot, opreg, -1);
             break;
         case 2: /* call Ev */
-            /* XXX: optimize if memory (no 'and' is necessary) */          
-            s->tb->type = TB_CALL;
-            
+            /* XXX: optimize if memory (no 'and' is necessary) */
             if (dflag == MO_16) {
                 tcg_gen_ext16u_tl(cpu_T[0], cpu_T[0]);
             }
@@ -4952,9 +4939,7 @@ static target_ulong disas_insn(CPUX86State *env, DisasContext *s,
             gen_op_jmp_v(cpu_T[0]);
             gen_eob(s);
             break;
-        case 3: /* lcall Ev */        
-            s->tb->type = TB_CALL;
-            
+        case 3: /* lcall Ev */
             gen_op_ld_v(s, ot, cpu_T[1], cpu_A0);
             gen_add_A0_im(s, 1 << ot);
             gen_op_ld_v(s, MO_16, cpu_T[0], cpu_A0);
@@ -6387,8 +6372,6 @@ static target_ulong disas_insn(CPUX86State *env, DisasContext *s,
         /************************/
         /* control */
     case 0xc2: /* ret im */
-		s->tb->type = TB_RET ;
-		
         val = cpu_ldsw_code(env, s->pc);
         s->pc += 2;
         ot = gen_pop_T0(s);
@@ -6398,8 +6381,6 @@ static target_ulong disas_insn(CPUX86State *env, DisasContext *s,
         gen_eob(s);
         break;
     case 0xc3: /* ret */
-		s->tb->type = TB_RET ;
-		
         ot = gen_pop_T0(s);
         gen_pop_update(s, ot);
         /* Note that gen_pop_T0 uses a zero-extending load.  */
@@ -6407,8 +6388,6 @@ static target_ulong disas_insn(CPUX86State *env, DisasContext *s,
         gen_eob(s);
         break;
     case 0xca: /* lret im */
-		s->tb->type = TB_RET ;
-		
         val = cpu_ldsw_code(env, s->pc);
         s->pc += 2;
     do_lret:
@@ -6434,13 +6413,9 @@ static target_ulong disas_insn(CPUX86State *env, DisasContext *s,
         gen_eob(s);
         break;
     case 0xcb: /* lret */
-		s->tb->type = TB_RET ;
-		
         val = 0;
         goto do_lret;
     case 0xcf: /* iret */
-		s->tb->type = TB_RET ;
-		
         gen_svm_check_intercept(s, pc_start, SVM_EXIT_IRET);
         if (!s->pe) {
             /* real mode */
@@ -6463,9 +6438,7 @@ static target_ulong disas_insn(CPUX86State *env, DisasContext *s,
         gen_eob(s);
         break;
     case 0xe8: /* call im */
-        {        
-            s->tb->type = TB_CALL;
-            
+        {
             if (dflag != MO_16) {
                 tval = (int32_t)insn_get(env, s, MO_32);
             } else {
@@ -6485,10 +6458,8 @@ static target_ulong disas_insn(CPUX86State *env, DisasContext *s,
         break;
     case 0x9a: /* lcall im */
         {
-            unsigned int selector, offset;  
-                  
-            s->tb->type = TB_CALL;
-            
+            unsigned int selector, offset;
+
             if (CODE64(s))
                 goto illegal_op;
             ot = dflag;
@@ -6729,41 +6700,63 @@ static target_ulong disas_insn(CPUX86State *env, DisasContext *s,
         }
     bt_op:
         tcg_gen_andi_tl(cpu_T[1], cpu_T[1], (1 << (3 + ot)) - 1);
+        tcg_gen_shr_tl(cpu_tmp4, cpu_T[0], cpu_T[1]);
         switch(op) {
         case 0:
-            tcg_gen_shr_tl(cpu_cc_src, cpu_T[0], cpu_T[1]);
-            tcg_gen_movi_tl(cpu_cc_dst, 0);
             break;
         case 1:
-            tcg_gen_shr_tl(cpu_tmp4, cpu_T[0], cpu_T[1]);
             tcg_gen_movi_tl(cpu_tmp0, 1);
             tcg_gen_shl_tl(cpu_tmp0, cpu_tmp0, cpu_T[1]);
             tcg_gen_or_tl(cpu_T[0], cpu_T[0], cpu_tmp0);
             break;
         case 2:
-            tcg_gen_shr_tl(cpu_tmp4, cpu_T[0], cpu_T[1]);
             tcg_gen_movi_tl(cpu_tmp0, 1);
             tcg_gen_shl_tl(cpu_tmp0, cpu_tmp0, cpu_T[1]);
-            tcg_gen_not_tl(cpu_tmp0, cpu_tmp0);
-            tcg_gen_and_tl(cpu_T[0], cpu_T[0], cpu_tmp0);
+            tcg_gen_andc_tl(cpu_T[0], cpu_T[0], cpu_tmp0);
             break;
         default:
         case 3:
-            tcg_gen_shr_tl(cpu_tmp4, cpu_T[0], cpu_T[1]);
             tcg_gen_movi_tl(cpu_tmp0, 1);
             tcg_gen_shl_tl(cpu_tmp0, cpu_tmp0, cpu_T[1]);
             tcg_gen_xor_tl(cpu_T[0], cpu_T[0], cpu_tmp0);
             break;
         }
-        set_cc_op(s, CC_OP_SARB + ot);
         if (op != 0) {
             if (mod != 3) {
                 gen_op_st_v(s, ot, cpu_T[0], cpu_A0);
             } else {
                 gen_op_mov_reg_v(ot, rm, cpu_T[0]);
             }
+        }
+
+        /* Delay all CC updates until after the store above.  Note that
+           C is the result of the test, Z is unchanged, and the others
+           are all undefined.  */
+        switch (s->cc_op) {
+        case CC_OP_MULB ... CC_OP_MULQ:
+        case CC_OP_ADDB ... CC_OP_ADDQ:
+        case CC_OP_ADCB ... CC_OP_ADCQ:
+        case CC_OP_SUBB ... CC_OP_SUBQ:
+        case CC_OP_SBBB ... CC_OP_SBBQ:
+        case CC_OP_LOGICB ... CC_OP_LOGICQ:
+        case CC_OP_INCB ... CC_OP_INCQ:
+        case CC_OP_DECB ... CC_OP_DECQ:
+        case CC_OP_SHLB ... CC_OP_SHLQ:
+        case CC_OP_SARB ... CC_OP_SARQ:
+        case CC_OP_BMILGB ... CC_OP_BMILGQ:
+            /* Z was going to be computed from the non-zero status of CC_DST.
+               We can get that same Z value (and the new C value) by leaving
+               CC_DST alone, setting CC_SRC, and using a CC_OP_SAR of the
+               same width.  */
             tcg_gen_mov_tl(cpu_cc_src, cpu_tmp4);
-            tcg_gen_movi_tl(cpu_cc_dst, 0);
+            set_cc_op(s, ((s->cc_op - CC_OP_MULB) & 3) + CC_OP_SARB);
+            break;
+        default:
+            /* Otherwise, generate EFLAGS and replace the C bit.  */
+            gen_compute_eflags(s);
+            tcg_gen_deposit_tl(cpu_cc_src, cpu_cc_src, cpu_tmp4,
+                               ctz32(CC_C), 1);
+            break;
         }
         break;
     case 0x1bc: /* bsf / tzcnt */

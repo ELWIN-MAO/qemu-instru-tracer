@@ -83,7 +83,7 @@ static void co_test_cb(void *opaque)
     data->ret = 0;
     active--;
 
-    /* The test continues in test_submit_co, after qemu_aio_wait_all... */
+    /* The test continues in test_submit_co, after aio_poll... */
 }
 
 static void test_submit_co(void)
@@ -98,7 +98,7 @@ static void test_submit_co(void)
     g_assert_cmpint(active, ==, 1);
     g_assert_cmpint(data.ret, ==, -EINPROGRESS);
 
-    /* qemu_aio_wait_all will execute the rest of the coroutine.  */
+    /* aio_poll will execute the rest of the coroutine.  */
 
     while (data.ret == -EINPROGRESS) {
         aio_poll(ctx, true);
@@ -180,7 +180,7 @@ static void test_cancel(void)
 
     /* Canceling the others will be a blocking operation.  */
     for (i = 0; i < 100; i++) {
-        if (data[i].n != 3) {
+        if (data[i].aiocb && data[i].n != 3) {
             bdrv_aio_cancel(data[i].aiocb);
         }
     }

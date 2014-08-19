@@ -282,6 +282,7 @@ static SlirpState *slirp_lookup(Monitor *mon, const char *vlan,
         NetClientState *nc;
         nc = net_hub_find_client_by_name(strtol(vlan, NULL, 0), stack);
         if (!nc) {
+            monitor_printf(mon, "unrecognized (vlan-id, stackname) pair\n");
             return NULL;
         }
         if (strcmp(nc->model, "user")) {
@@ -527,6 +528,7 @@ static int slirp_smb(SlirpState* s, const char *exported_dir,
             "pid directory=%s\n"
             "lock directory=%s\n"
             "state directory=%s\n"
+            "ncalrpc dir=%s/ncalrpc\n"
             "log file=%s/log.smbd\n"
             "smb passwd file=%s/smbpasswd\n"
             "security = user\n"
@@ -536,6 +538,7 @@ static int slirp_smb(SlirpState* s, const char *exported_dir,
             "read only=no\n"
             "guest ok=yes\n"
             "force user=%s\n",
+            s->smb_dir,
             s->smb_dir,
             s->smb_dir,
             s->smb_dir,

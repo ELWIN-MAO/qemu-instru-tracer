@@ -107,19 +107,20 @@ static void virtio_rng_save(QEMUFile *f, void *opaque)
 
 static int virtio_rng_load(QEMUFile *f, void *opaque, int version_id)
 {
-    VirtIORNG *vrng = opaque;
-    VirtIODevice *vdev = VIRTIO_DEVICE(vrng);
-
     if (version_id != 1) {
         return -EINVAL;
     }
-    virtio_load(vdev, f);
+    return virtio_load(VIRTIO_DEVICE(opaque), f, version_id);
+}
 
+static int virtio_rng_load_device(VirtIODevice *vdev, QEMUFile *f,
+                                  int version_id)
+{
     /* We may have an element ready but couldn't process it due to a quota
      * limit.  Make sure to try again after live migration when the quota may
      * have been reset.
      */
-    virtio_rng_process(vrng);
+    virtio_rng_process(VIRTIO_RNG(vdev));
 
     return 0;
 }
@@ -180,7 +181,13 @@ static void virtio_rng_device_realize(DeviceState *dev, Error **errp)
 
     vrng->vq = virtio_add_queue(vdev, 8, handle_input);
 
-    assert(vrng->conf.max_bytes <= INT64_MAX);
+    /* Workaround: Property parsing does not enforce unsigned integers,
+     * So this is a hack to reject such numbers. */
+    if (vrng->conf.max_bytes > INT64_MAX) {
+        error_set(errp, QERR_INVALID_PARAMETER_VALUE, "max-bytes",
+                  "a non-negative integer below 2^63");
+        return;
+    }
     vrng->quota_remaining = vrng->conf.max_bytes;
 
     vrng->rate_limit_timer = timer_new_ms(QEMU_CLOCK_VIRTUAL,
@@ -219,6 +226,7 @@ static void virtio_rng_class_init(ObjectClass *klass, void *data)
     vdc->realize = virtio_rng_device_realize;
     vdc->unrealize = virtio_rng_device_unrealize;
     vdc->get_features = get_features;
+    vdc->load = virtio_rng_load_device;
 }
 
 static void virtio_rng_initfn(Object *obj)

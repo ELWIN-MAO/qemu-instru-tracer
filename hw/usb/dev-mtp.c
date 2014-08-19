@@ -46,10 +46,12 @@ enum mtp_code {
 
     /* response codes */
     RES_OK                         = 0x2001,
+    RES_GENERAL_ERROR              = 0x2002,
     RES_SESSION_NOT_OPEN           = 0x2003,
     RES_INVALID_TRANSACTION_ID     = 0x2004,
     RES_OPERATION_NOT_SUPPORTED    = 0x2005,
     RES_PARAMETER_NOT_SUPPORTED    = 0x2006,
+    RES_INCOMPLETE_TRANSFER        = 0x2007,
     RES_INVALID_STORAGE_ID         = 0x2008,
     RES_INVALID_OBJECT_HANDLE      = 0x2009,
     RES_SPEC_BY_FORMAT_UNSUPPORTED = 0x2014,
@@ -108,7 +110,8 @@ struct MTPObject {
     struct stat  stat;
     MTPObject    *parent;
     MTPObject    **children;
-    int32_t      nchildren;
+    uint32_t     nchildren;
+    bool         have_children;
     QTAILQ_ENTRY(MTPObject) next;
 };
 
@@ -142,6 +145,7 @@ enum {
     STR_MANUFACTURER = 1,
     STR_PRODUCT,
     STR_SERIALNUMBER,
+    STR_MTP,
     STR_CONFIG_FULL,
     STR_CONFIG_HIGH,
     STR_CONFIG_SUPER,
@@ -151,6 +155,7 @@ static const USBDescStrings desc_strings = {
     [STR_MANUFACTURER] = MTP_MANUFACTURER,
     [STR_PRODUCT]      = MTP_PRODUCT,
     [STR_SERIALNUMBER] = "34617",
+    [STR_MTP]          = "MTP",
     [STR_CONFIG_FULL]  = "Full speed config (usb 1.1)",
     [STR_CONFIG_HIGH]  = "High speed config (usb 2.0)",
     [STR_CONFIG_SUPER] = "Super speed config (usb 3.0)",
@@ -162,6 +167,7 @@ static const USBDescIface desc_iface_full = {
     .bInterfaceClass               = USB_CLASS_STILL_IMAGE,
     .bInterfaceSubClass            = 0x01,
     .bInterfaceProtocol            = 0x01,
+    .iInterface                    = STR_MTP,
     .eps = (USBDescEndpoint[]) {
         {
             .bEndpointAddress      = USB_DIR_IN | EP_DATA_IN,
@@ -203,6 +209,7 @@ static const USBDescIface desc_iface_high = {
     .bInterfaceClass               = USB_CLASS_STILL_IMAGE,
     .bInterfaceSubClass            = 0x01,
     .bInterfaceProtocol            = 0x01,
+    .iInterface                    = STR_MTP,
     .eps = (USBDescEndpoint[]) {
         {
             .bEndpointAddress      = USB_DIR_IN | EP_DATA_IN,
@@ -272,7 +279,6 @@ static MTPObject *usb_mtp_object_alloc(MTPState *s, uint32_t handle,
     o->handle = handle;
     o->parent = parent;
     o->name = g_strdup(name);
-    o->nchildren = -1;
     if (parent == NULL) {
         o->path = g_strdup(name);
     } else {
@@ -294,7 +300,7 @@ static MTPObject *usb_mtp_object_alloc(MTPState *s, uint32_t handle,
         goto ignore;
     }
 
-    fprintf(stderr, "%s: 0x%x %s\n", __func__, o->handle, o->path);
+    trace_usb_mtp_object_alloc(s->dev.addr, o->handle, o->path);
 
     QTAILQ_INSERT_TAIL(&s->objects, o, next);
     return o;
@@ -310,7 +316,7 @@ static void usb_mtp_object_free(MTPState *s, MTPObject *o)
 {
     int i;
 
-    fprintf(stderr, "%s: 0x%x %s\n", __func__, o->handle, o->path);
+    trace_usb_mtp_object_free(s->dev.addr, o->handle, o->path);
 
     QTAILQ_REMOVE(&s->objects, o, next);
     for (i = 0; i < o->nchildren; i++) {
@@ -339,7 +345,11 @@ static void usb_mtp_object_readdir(MTPState *s, MTPObject *o)
     struct dirent *entry;
     DIR *dir;
 
-    o->nchildren = 0;
+    if (o->have_children) {
+        return;
+    }
+    o->have_children = true;
+
     dir = opendir(o->path);
     if (!dir) {
         return;
@@ -416,7 +426,7 @@ static void usb_mtp_add_u32(MTPData *data, uint32_t val)
 
 static void usb_mtp_add_u64(MTPData *data, uint64_t val)
 {
-    usb_mtp_realloc(data, 4);
+    usb_mtp_realloc(data, 8);
     data->data[data->length++] = (val >>  0) & 0xff;
     data->data[data->length++] = (val >>  8) & 0xff;
     data->data[data->length++] = (val >> 16) & 0xff;
@@ -424,7 +434,7 @@ static void usb_mtp_add_u64(MTPData *data, uint64_t val)
     data->data[data->length++] = (val >> 32) & 0xff;
     data->data[data->length++] = (val >> 40) & 0xff;
     data->data[data->length++] = (val >> 48) & 0xff;
-    data->data[data->length++] = (val >> 54) & 0xff;
+    data->data[data->length++] = (val >> 56) & 0xff;
 }
 
 static void usb_mtp_add_u16_array(MTPData *data, uint32_t len,
@@ -533,7 +543,7 @@ static MTPData *usb_mtp_get_device_info(MTPState *s, MTPControl *c)
 
     trace_usb_mtp_op_get_device_info(s->dev.addr);
 
-    usb_mtp_add_u16(d, 0x0100);
+    usb_mtp_add_u16(d, 100);
     usb_mtp_add_u32(d, 0xffffffff);
     usb_mtp_add_u16(d, 0x0101);
     usb_mtp_add_wstr(d, L"");
@@ -548,7 +558,7 @@ static MTPData *usb_mtp_get_device_info(MTPState *s, MTPControl *c)
     usb_mtp_add_wstr(d, L"" MTP_MANUFACTURER);
     usb_mtp_add_wstr(d, L"" MTP_PRODUCT);
     usb_mtp_add_wstr(d, L"0.1");
-    usb_mtp_add_wstr(d, L"123456789abcdef123456789abcdef");
+    usb_mtp_add_wstr(d, L"0123456789abcdef0123456789abcdef");
 
     return d;
 }
@@ -669,6 +679,7 @@ static MTPData *usb_mtp_get_object(MTPState *s, MTPControl *c,
 
     d->fd = open(o->path, O_RDONLY);
     if (d->fd == -1) {
+        usb_mtp_data_free(d);
         return NULL;
     }
     d->length = o->stat.st_size;
@@ -688,6 +699,7 @@ static MTPData *usb_mtp_get_partial_object(MTPState *s, MTPControl *c,
 
     d->fd = open(o->path, O_RDONLY);
     if (d->fd == -1) {
+        usb_mtp_data_free(d);
         return NULL;
     }
 
@@ -695,7 +707,10 @@ static MTPData *usb_mtp_get_partial_object(MTPState *s, MTPControl *c,
     if (offset > o->stat.st_size) {
         offset = o->stat.st_size;
     }
-    lseek(d->fd, offset, SEEK_SET);
+    if (lseek(d->fd, offset, SEEK_SET) < 0) {
+        usb_mtp_data_free(d);
+        return NULL;
+    }
 
     d->length = c->argv[2];
     if (d->length > o->stat.st_size - offset) {
@@ -786,9 +801,7 @@ static void usb_mtp_command(MTPState *s, MTPControl *c)
                                  c->trans, 0, 0, 0);
             return;
         }
-        if (o->nchildren == -1) {
-            usb_mtp_object_readdir(s, o);
-        }
+        usb_mtp_object_readdir(s, o);
         if (c->code == CMD_GET_NUM_OBJECTS) {
             trace_usb_mtp_op_get_num_objects(s->dev.addr, o->handle, o->path);
             nres = 1;
@@ -820,7 +833,9 @@ static void usb_mtp_command(MTPState *s, MTPControl *c)
         }
         data_in = usb_mtp_get_object(s, c, o);
         if (NULL == data_in) {
-            fprintf(stderr, "%s: TODO: handle error\n", __func__);
+            usb_mtp_queue_result(s, RES_GENERAL_ERROR,
+                                 c->trans, 0, 0, 0);
+            return;
         }
         break;
     case CMD_GET_PARTIAL_OBJECT:
@@ -837,14 +852,15 @@ static void usb_mtp_command(MTPState *s, MTPControl *c)
         }
         data_in = usb_mtp_get_partial_object(s, c, o);
         if (NULL == data_in) {
-            fprintf(stderr, "%s: TODO: handle error\n", __func__);
+            usb_mtp_queue_result(s, RES_GENERAL_ERROR,
+                                 c->trans, 0, 0, 0);
+            return;
         }
         nres = 1;
         res0 = data_in->length;
         break;
     default:
-        fprintf(stderr, "%s: unknown command code 0x%04x\n",
-                __func__, c->code);
+        trace_usb_mtp_op_unknown(s->dev.addr, c->code);
         usb_mtp_queue_result(s, RES_OPERATION_NOT_SUPPORTED,
                              c->trans, 0, 0, 0);
         return;
@@ -892,6 +908,7 @@ static void usb_mtp_handle_control(USBDevice *dev, USBPacket *p,
 
 static void usb_mtp_cancel_packet(USBDevice *dev, USBPacket *p)
 {
+    /* we don't use async packets, so this should never be called */
     fprintf(stderr, "%s\n", __func__);
 }
 
@@ -944,7 +961,8 @@ static void usb_mtp_handle_data(USBDevice *dev, USBPacket *p)
                 }
                 rc = read(d->fd, d->data, dlen);
                 if (rc != dlen) {
-                    fprintf(stderr, "%s: TODO: handle read error\n", __func__);
+                    memset(d->data, 0, dlen);
+                    s->result->code = RES_INCOMPLETE_TRANSFER;
                 }
                 usb_packet_copy(p, d->data, dlen);
             }
@@ -996,6 +1014,14 @@ static void usb_mtp_handle_data(USBDevice *dev, USBPacket *p)
             cmd.argc = (le32_to_cpu(container.length) - sizeof(container))
                 / sizeof(uint32_t);
             cmd.trans = le32_to_cpu(container.trans);
+            if (cmd.argc > ARRAY_SIZE(cmd.argv)) {
+                cmd.argc = ARRAY_SIZE(cmd.argv);
+            }
+            if (p->iov.size < sizeof(container) + cmd.argc * sizeof(uint32_t)) {
+                trace_usb_mtp_stall(s->dev.addr, "packet too small");
+                p->status = USB_RET_STALL;
+                return;
+            }
             usb_packet_copy(p, &params, cmd.argc * sizeof(uint32_t));
             for (i = 0; i < cmd.argc; i++) {
                 cmd.argv[i] = le32_to_cpu(params[i]);
@@ -1009,8 +1035,7 @@ static void usb_mtp_handle_data(USBDevice *dev, USBPacket *p)
             usb_mtp_command(s, &cmd);
             break;
         default:
-            iov_hexdump(p->iov.iov, p->iov.niov, stderr, "mtp-out", 32);
-            trace_usb_mtp_stall(s->dev.addr, "TODO: implement data-out");
+            /* not needed as long as the mtp device is read-only */
             p->status = USB_RET_STALL;
             return;
         }
@@ -1044,7 +1069,7 @@ static int usb_mtp_initfn(USBDevice *dev)
     QTAILQ_INIT(&s->objects);
     if (s->desc == NULL) {
         s->desc = strrchr(s->root, '/');
-        if (s->desc) {
+        if (s->desc && s->desc[0]) {
             s->desc = g_strdup(s->desc + 1);
         } else {
             s->desc = g_strdup("none");
@@ -1065,7 +1090,7 @@ static const VMStateDescription vmstate_usb_mtp = {
 };
 
 static Property mtp_properties[] = {
-    DEFINE_PROP_STRING("root", MTPState, root),
+    DEFINE_PROP_STRING("x-root", MTPState, root),
     DEFINE_PROP_STRING("desc", MTPState, desc),
     DEFINE_PROP_END_OF_LIST(),
 };
