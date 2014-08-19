@@ -1,3 +1,4 @@
+#!/usr/bin/python
 import sys
 log=sys.stdin
 #log=open("qemu_log3_zhankai_zhilin.txt")
