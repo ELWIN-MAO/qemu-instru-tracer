@@ -744,7 +744,7 @@ int cpu_exec(CPUArchState *env)
                 if (qemu_loglevel_mask(CPU_LOG_EXEC)) {
                     //qemu_log("Trace %p [" TARGET_FMT_lx "] %s\n",
                              //tb->tc_ptr, tb->pc, lookup_symbol(tb->pc));
-                    qemu_log("T %p %x %x\n",tb->tc_ptr,env->cr[3],env->esp);
+                    qemu_log("T %p %x %x\n",tb->tc_ptr,env->cr[3],env->regs[R_ESP]);
                 }
                 /* see if we can patch the calling TB. When the TB
                    spans two pages, we cannot safely do a direct
