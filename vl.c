@@ -183,6 +183,7 @@ uint8_t *boot_splash_filedata;
 size_t boot_splash_filedata_size;
 uint8_t qemu_extra_params_fw[2];
 
+int icount_align_option;
 typedef struct FWBootEntry FWBootEntry;
 
 struct FWBootEntry {
@@ -387,6 +388,10 @@ static QemuOptsList qemu_machine_opts = {
             .name = PC_MACHINE_MAX_RAM_BELOW_4G,
             .type = QEMU_OPT_SIZE,
             .help = "maximum ram below the 4G boundary (32bit boundary)",
+        },{
+            .name = "iommu",
+            .type = QEMU_OPT_BOOL,
+            .help = "Set on/off to enable/disable Intel IOMMU (VT-d)",
         },
         { /* End of list */ }
     },
@@ -532,6 +537,23 @@ static QemuOptsList qemu_mem_opts = {
         {
             .name = "maxmem",
             .type = QEMU_OPT_SIZE,
+        },
+        { /* end of list */ }
+    },
+};
+
+static QemuOptsList qemu_icount_opts = {
+    .name = "icount",
+    .implied_opt_name = "shift",
+    .merge_lists = true,
+    .head = QTAILQ_HEAD_INITIALIZER(qemu_icount_opts.head),
+    .desc = {
+        {
+            .name = "shift",
+            .type = QEMU_OPT_STRING,
+        }, {
+            .name = "align",
+            .type = QEMU_OPT_BOOL,
         },
         { /* end of list */ }
     },
@@ -1136,7 +1158,7 @@ static int drive_init_func(QemuOpts *opts, void *opaque)
 
 static int drive_enable_snapshot(QemuOpts *opts, void *opaque)
 {
-    if (NULL == qemu_opt_get(opts, "snapshot")) {
+    if (qemu_opt_get(opts, "snapshot") == NULL) {
         qemu_opt_set(opts, "snapshot", "on");
     }
     return 0;
@@ -2488,8 +2510,9 @@ static int foreach_device_config(int type, int (*func)(const char *cmdline))
         loc_push_restore(&conf->loc);
         rc = func(conf->cmdline);
         loc_pop(&conf->loc);
-        if (0 != rc)
+        if (rc) {
             return rc;
+        }
     }
     return 0;
 }
@@ -2818,15 +2841,15 @@ static void free_and_trace(gpointer mem)
     free(mem);
 }
 
-static int object_set_property(const char *name, const char *value, void *opaque)
+static int machine_set_property(const char *name, const char *value,
+                                void *opaque)
 {
     Object *obj = OBJECT(opaque);
     StringInputVisitor *siv;
     Error *local_err = NULL;
     char *c, *qom_name;
 
-    if (strcmp(name, "qom-type") == 0 || strcmp(name, "id") == 0 ||
-        strcmp(name, "type") == 0) {
+    if (strcmp(name, "type") == 0) {
         return 0;
     }
 
@@ -2899,6 +2922,7 @@ out:
     g_free(dummy);
     if (err) {
         qerror_report_err(err);
+        error_free(err);
         return -1;
     }
     return 0;
@@ -2908,13 +2932,12 @@ int main(int argc, char **argv, char **envp)
 {
     int i;
     int snapshot, linux_boot;
-    const char *icount_option = NULL;
     const char *initrd_filename;
     const char *kernel_filename, *kernel_cmdline;
     const char *boot_order;
     DisplayState *ds;
     int cyls, heads, secs, translation;
-    QemuOpts *hda_opts = NULL, *opts, *machine_opts;
+    QemuOpts *hda_opts = NULL, *opts, *machine_opts, *icount_opts = NULL;
     QemuOptsList *olist;
     int optind;
     const char *optarg;
@@ -2979,6 +3002,7 @@ int main(int argc, char **argv, char **envp)
     qemu_add_opts(&qemu_msg_opts);
     qemu_add_opts(&qemu_name_opts);
     qemu_add_opts(&qemu_numa_opts);
+    qemu_add_opts(&qemu_icount_opts);
 
     runstate_init();
 
@@ -3830,7 +3854,11 @@ int main(int argc, char **argv, char **envp)
                 }
                 break;
             case QEMU_OPTION_icount:
-                icount_option = optarg;
+                icount_opts = qemu_opts_parse(qemu_find_opts("icount"),
+                                              optarg, 1);
+                if (!icount_opts) {
+                    exit(1);
+                }
                 break;
             case QEMU_OPTION_incoming:
                 incoming = optarg;
@@ -4007,11 +4035,6 @@ int main(int argc, char **argv, char **envp)
 
     if (machine_class->hw_version) {
         qemu_set_version(machine_class->hw_version);
-    }
-
-    if (qemu_opts_foreach(qemu_find_opts("object"),
-                          object_create, NULL, 0) != 0) {
-        exit(1);
     }
 
     /* Init CPU def lists, based on config
@@ -4225,8 +4248,13 @@ int main(int argc, char **argv, char **envp)
         exit(0);
     }
 
+    if (qemu_opts_foreach(qemu_find_opts("object"),
+                          object_create, NULL, 0) != 0) {
+        exit(1);
+    }
+
     machine_opts = qemu_get_machine_opts();
-    if (qemu_opt_foreach(machine_opts, object_set_property, current_machine,
+    if (qemu_opt_foreach(machine_opts, machine_set_property, current_machine,
                          1) < 0) {
         object_unref(OBJECT(current_machine));
         exit(1);
@@ -4306,11 +4334,14 @@ int main(int argc, char **argv, char **envp)
     qemu_spice_init();
 #endif
 
-    if (icount_option && (kvm_enabled() || xen_enabled())) {
-        fprintf(stderr, "-icount is not allowed with kvm or xen\n");
-        exit(1);
+    if (icount_opts) {
+        if (kvm_enabled() || xen_enabled()) {
+            fprintf(stderr, "-icount is not allowed with kvm or xen\n");
+            exit(1);
+        }
+        configure_icount(icount_opts, &error_abort);
+        qemu_opts_del(icount_opts);
     }
-    configure_icount(icount_option);
 
     /* clean up network at qemu process termination */
     atexit(&net_cleanup);

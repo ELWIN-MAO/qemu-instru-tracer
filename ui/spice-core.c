@@ -677,7 +677,7 @@ void qemu_spice_init(void)
 
     if (tls_port) {
         x509_dir = qemu_opt_get(opts, "x509-dir");
-        if (NULL == x509_dir) {
+        if (!x509_dir) {
             x509_dir = ".";
         }
 
@@ -803,7 +803,7 @@ void qemu_spice_init(void)
 
     seamless_migration = qemu_opt_get_bool(opts, "seamless-migration", 0);
     spice_server_set_seamless_migration(spice_server, seamless_migration);
-    if (0 != spice_server_init(spice_server, &core_interface)) {
+    if (spice_server_init(spice_server, &core_interface) != 0) {
         error_report("failed to initialize spice server");
         exit(1);
     };
@@ -853,7 +853,6 @@ int qemu_spice_add_interface(SpiceBaseInstance *sin)
 }
 
 static GSList *spice_consoles;
-static int display_id;
 
 bool qemu_spice_have_display_interface(QemuConsole *con)
 {
@@ -868,7 +867,7 @@ int qemu_spice_add_display_interface(QXLInstance *qxlin, QemuConsole *con)
     if (g_slist_find(spice_consoles, con)) {
         return -1;
     }
-    qxlin->id = display_id++;
+    qxlin->id = qemu_console_get_index(con);
     spice_consoles = g_slist_append(spice_consoles, con);
     return qemu_spice_add_interface(&qxlin->base);
 }

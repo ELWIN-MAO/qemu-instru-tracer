@@ -57,6 +57,8 @@ struct BdrvDirtyBitmap {
 
 #define NOT_DONE 0x7fffffff /* used while emulated sync operation in progress */
 
+#define COROUTINE_POOL_RESERVATION 64 /* number of coroutines to reserve */
+
 static void bdrv_dev_change_media_cb(BlockDriverState *bs, bool load);
 static BlockDriverAIOCB *bdrv_aio_readv_em(BlockDriverState *bs,
         int64_t sector_num, QEMUIOVector *qiov, int nb_sectors,
@@ -349,7 +351,7 @@ BlockDriverState *bdrv_new(const char *device_name, Error **errp)
         return NULL;
     }
 
-    bs = g_malloc0(sizeof(BlockDriverState));
+    bs = g_new0(BlockDriverState, 1);
     QLIST_INIT(&bs->dirty_bitmaps);
     pstrcpy(bs->device_name, sizeof(bs->device_name), device_name);
     if (device_name[0] != '\0') {
@@ -701,6 +703,7 @@ static int find_image_format(BlockDriverState *bs, const char *filename,
 
 /**
  * Set the current 'total_sectors' value
+ * Return 0 on success, -errno on error.
  */
 static int refresh_total_sectors(BlockDriverState *bs, int64_t hint)
 {
@@ -961,6 +964,7 @@ static int bdrv_open_common(BlockDriverState *bs, BlockDriverState *file,
     } else {
         bs->filename[0] = '\0';
     }
+    pstrcpy(bs->exact_filename, sizeof(bs->exact_filename), bs->filename);
 
     bs->drv = drv;
     bs->opaque = g_malloc0(drv->instance_size);
@@ -1313,7 +1317,6 @@ int bdrv_append_temp_snapshot(BlockDriverState *bs, int flags, Error **errp)
         error_setg_errno(errp, -total_size, "Could not get image size");
         goto out;
     }
-    total_size &= BDRV_SECTOR_MASK;
 
     /* Create the temporary image */
     ret = get_tmp_filename(tmp_filename, PATH_MAX + 1);
@@ -1502,6 +1505,8 @@ int bdrv_open(BlockDriverState **pbs, const char *filename,
             goto close_and_fail;
         }
     }
+
+    bdrv_refresh_filename(bs);
 
     /* For snapshot=on, create a temporary qcow2 overlay. bs points to the
      * temporary snapshot afterwards. */
@@ -1814,6 +1819,8 @@ void bdrv_reopen_abort(BDRVReopenState *reopen_state)
 
 void bdrv_close(BlockDriverState *bs)
 {
+    BdrvAioNotifier *ban, *ban_next;
+
     if (bs->job) {
         block_job_cancel_sync(bs->job);
     }
@@ -1843,6 +1850,8 @@ void bdrv_close(BlockDriverState *bs)
         bs->zero_beyond_eof = false;
         QDECREF(bs->options);
         bs->options = NULL;
+        QDECREF(bs->full_open_options);
+        bs->full_open_options = NULL;
 
         if (bs->file != NULL) {
             bdrv_unref(bs->file);
@@ -1856,6 +1865,11 @@ void bdrv_close(BlockDriverState *bs)
     if (bs->io_limits_enabled) {
         bdrv_io_limits_disable(bs);
     }
+
+    QLIST_FOREACH_SAFE(ban, &bs->aio_notifiers, list, ban_next) {
+        g_free(ban);
+    }
+    QLIST_INIT(&bs->aio_notifiers);
 }
 
 void bdrv_close_all(void)
@@ -2107,6 +2121,9 @@ int bdrv_attach_dev(BlockDriverState *bs, void *dev)
     }
     bs->dev = dev;
     bdrv_iostatus_reset(bs);
+
+    /* We're expecting I/O from the device so bump up coroutine pool size */
+    qemu_coroutine_adjust_pool_size(COROUTINE_POOL_RESERVATION);
     return 0;
 }
 
@@ -2126,6 +2143,7 @@ void bdrv_detach_dev(BlockDriverState *bs, void *dev)
     bs->dev_ops = NULL;
     bs->dev_opaque = NULL;
     bs->guest_block_size = 512;
+    qemu_coroutine_adjust_pool_size(-COROUTINE_POOL_RESERVATION);
 }
 
 /* TODO change to return DeviceState * when all users are qdevified */
@@ -2203,6 +2221,9 @@ bool bdrv_dev_is_medium_locked(BlockDriverState *bs)
  */
 int bdrv_check(BlockDriverState *bs, BdrvCheckResult *res, BdrvCheckMode fix)
 {
+    if (bs->drv == NULL) {
+        return -ENOMEDIUM;
+    }
     if (bs->drv->bdrv_check == NULL) {
         return -ENOTSUP;
     }
@@ -2269,7 +2290,14 @@ int bdrv_commit(BlockDriverState *bs)
     }
 
     total_sectors = length >> BDRV_SECTOR_BITS;
-    buf = g_malloc(COMMIT_BUF_SECTORS * BDRV_SECTOR_SIZE);
+
+    /* qemu_try_blockalign() for bs will choose an alignment that works for
+     * bs->backing_hd as well, so no need to compare the alignment manually. */
+    buf = qemu_try_blockalign(bs, COMMIT_BUF_SECTORS * BDRV_SECTOR_SIZE);
+    if (buf == NULL) {
+        ret = -ENOMEM;
+        goto ro_cleanup;
+    }
 
     for (sector = 0; sector < total_sectors; sector += n) {
         ret = bdrv_is_allocated(bs, sector, COMMIT_BUF_SECTORS, &n);
@@ -2307,7 +2335,7 @@ int bdrv_commit(BlockDriverState *bs)
 
     ret = 0;
 ro_cleanup:
-    g_free(buf);
+    qemu_vfree(buf);
 
     if (ro) {
         /* ignoring error return here */
@@ -2612,7 +2640,7 @@ int bdrv_drop_intermediate(BlockDriverState *active, BlockDriverState *top,
      * into our deletion queue, until we hit the 'base'
      */
     while (intermediate) {
-        intermediate_state = g_malloc0(sizeof(BlkIntermediateStates));
+        intermediate_state = g_new0(BlkIntermediateStates, 1);
         intermediate_state->bs = intermediate;
         QSIMPLEQ_INSERT_TAIL(&states_to_delete, intermediate_state, entry);
 
@@ -2827,18 +2855,16 @@ int bdrv_write_zeroes(BlockDriverState *bs, int64_t sector_num,
  */
 int bdrv_make_zero(BlockDriverState *bs, BdrvRequestFlags flags)
 {
-    int64_t target_size;
-    int64_t ret, nb_sectors, sector_num = 0;
+    int64_t target_sectors, ret, nb_sectors, sector_num = 0;
     int n;
 
-    target_size = bdrv_getlength(bs);
-    if (target_size < 0) {
-        return target_size;
+    target_sectors = bdrv_nb_sectors(bs);
+    if (target_sectors < 0) {
+        return target_sectors;
     }
-    target_size /= BDRV_SECTOR_SIZE;
 
     for (;;) {
-        nb_sectors = target_size - sector_num;
+        nb_sectors = target_sectors - sector_num;
         if (nb_sectors <= 0) {
             return 0;
         }
@@ -2968,7 +2994,12 @@ static int coroutine_fn bdrv_co_do_copy_on_readv(BlockDriverState *bs,
                                    cluster_sector_num, cluster_nb_sectors);
 
     iov.iov_len = cluster_nb_sectors * BDRV_SECTOR_SIZE;
-    iov.iov_base = bounce_buffer = qemu_blockalign(bs, iov.iov_len);
+    iov.iov_base = bounce_buffer = qemu_try_blockalign(bs, iov.iov_len);
+    if (bounce_buffer == NULL) {
+        ret = -ENOMEM;
+        goto err;
+    }
+
     qemu_iovec_init_external(&bounce_qiov, &iov, 1);
 
     ret = drv->bdrv_co_readv(bs, cluster_sector_num, cluster_nb_sectors,
@@ -3056,15 +3087,14 @@ static int coroutine_fn bdrv_aligned_preadv(BlockDriverState *bs,
         ret = drv->bdrv_co_readv(bs, sector_num, nb_sectors, qiov);
     } else {
         /* Read zeros after EOF of growable BDSes */
-        int64_t len, total_sectors, max_nb_sectors;
+        int64_t total_sectors, max_nb_sectors;
 
-        len = bdrv_getlength(bs);
-        if (len < 0) {
-            ret = len;
+        total_sectors = bdrv_nb_sectors(bs);
+        if (total_sectors < 0) {
+            ret = total_sectors;
             goto out;
         }
 
-        total_sectors = DIV_ROUND_UP(len, BDRV_SECTOR_SIZE);
         max_nb_sectors = ROUND_UP(MAX(0, total_sectors - sector_num),
                                   align >> BDRV_SECTOR_BITS);
         if (max_nb_sectors > 0) {
@@ -3253,7 +3283,11 @@ static int coroutine_fn bdrv_co_do_write_zeroes(BlockDriverState *bs,
             /* Fall back to bounce buffer if write zeroes is unsupported */
             iov.iov_len = num * BDRV_SECTOR_SIZE;
             if (iov.iov_base == NULL) {
-                iov.iov_base = qemu_blockalign(bs, num * BDRV_SECTOR_SIZE);
+                iov.iov_base = qemu_try_blockalign(bs, num * BDRV_SECTOR_SIZE);
+                if (iov.iov_base == NULL) {
+                    ret = -ENOMEM;
+                    goto fail;
+                }
                 memset(iov.iov_base, 0, num * BDRV_SECTOR_SIZE);
             }
             qemu_iovec_init_external(&qiov, &iov, 1);
@@ -3273,6 +3307,7 @@ static int coroutine_fn bdrv_co_do_write_zeroes(BlockDriverState *bs,
         nb_sectors -= num;
     }
 
+fail:
     qemu_vfree(iov.iov_base);
     return ret;
 }
@@ -3536,11 +3571,12 @@ int64_t bdrv_get_allocated_file_size(BlockDriverState *bs)
 }
 
 /**
- * Length of a file in bytes. Return < 0 if error or unknown.
+ * Return number of sectors on success, -errno on error.
  */
-int64_t bdrv_getlength(BlockDriverState *bs)
+int64_t bdrv_nb_sectors(BlockDriverState *bs)
 {
     BlockDriver *drv = bs->drv;
+
     if (!drv)
         return -ENOMEDIUM;
 
@@ -3550,19 +3586,26 @@ int64_t bdrv_getlength(BlockDriverState *bs)
             return ret;
         }
     }
-    return bs->total_sectors * BDRV_SECTOR_SIZE;
+    return bs->total_sectors;
+}
+
+/**
+ * Return length in bytes on success, -errno on error.
+ * The length is always a multiple of BDRV_SECTOR_SIZE.
+ */
+int64_t bdrv_getlength(BlockDriverState *bs)
+{
+    int64_t ret = bdrv_nb_sectors(bs);
+
+    return ret < 0 ? ret : ret * BDRV_SECTOR_SIZE;
 }
 
 /* return 0 as number of sectors if no device present or error */
 void bdrv_get_geometry(BlockDriverState *bs, uint64_t *nb_sectors_ptr)
 {
-    int64_t length;
-    length = bdrv_getlength(bs);
-    if (length < 0)
-        length = 0;
-    else
-        length = length >> BDRV_SECTOR_BITS;
-    *nb_sectors_ptr = length;
+    int64_t nb_sectors = bdrv_nb_sectors(bs);
+
+    *nb_sectors_ptr = nb_sectors < 0 ? 0 : nb_sectors;
 }
 
 void bdrv_set_on_error(BlockDriverState *bs, BlockdevOnError on_read_error,
@@ -3708,11 +3751,17 @@ const char *bdrv_get_format_name(BlockDriverState *bs)
     return bs->drv ? bs->drv->format_name : NULL;
 }
 
+static int qsort_strcmp(const void *a, const void *b)
+{
+    return strcmp(a, b);
+}
+
 void bdrv_iterate_format(void (*it)(void *opaque, const char *name),
                          void *opaque)
 {
     BlockDriver *drv;
     int count = 0;
+    int i;
     const char **formats = NULL;
 
     QLIST_FOREACH(drv, &bdrv_drivers, list) {
@@ -3724,12 +3773,18 @@ void bdrv_iterate_format(void (*it)(void *opaque, const char *name),
             }
 
             if (!found) {
-                formats = g_realloc(formats, (count + 1) * sizeof(char *));
+                formats = g_renew(const char *, formats, count + 1);
                 formats[count++] = drv->format_name;
-                it(opaque, drv->format_name);
             }
         }
     }
+
+    qsort(formats, count, sizeof(formats[0]), qsort_strcmp);
+
+    for (i = 0; i < count; i++) {
+        it(opaque, formats[i]);
+    }
+
     g_free(formats);
 }
 
@@ -3945,21 +4000,21 @@ static int64_t coroutine_fn bdrv_co_get_block_status(BlockDriverState *bs,
                                                      int64_t sector_num,
                                                      int nb_sectors, int *pnum)
 {
-    int64_t length;
+    int64_t total_sectors;
     int64_t n;
     int64_t ret, ret2;
 
-    length = bdrv_getlength(bs);
-    if (length < 0) {
-        return length;
+    total_sectors = bdrv_nb_sectors(bs);
+    if (total_sectors < 0) {
+        return total_sectors;
     }
 
-    if (sector_num >= (length >> BDRV_SECTOR_BITS)) {
+    if (sector_num >= total_sectors) {
         *pnum = 0;
         return 0;
     }
 
-    n = bs->total_sectors - sector_num;
+    n = total_sectors - sector_num;
     if (n < nb_sectors) {
         nb_sectors = n;
     }
@@ -3994,8 +4049,8 @@ static int64_t coroutine_fn bdrv_co_get_block_status(BlockDriverState *bs,
             ret |= BDRV_BLOCK_ZERO;
         } else if (bs->backing_hd) {
             BlockDriverState *bs2 = bs->backing_hd;
-            int64_t length2 = bdrv_getlength(bs2);
-            if (length2 >= 0 && sector_num >= (length2 >> BDRV_SECTOR_BITS)) {
+            int64_t nb_sectors2 = bdrv_nb_sectors(bs2);
+            if (nb_sectors2 >= 0 && sector_num >= nb_sectors2) {
                 ret |= BDRV_BLOCK_ZERO;
             }
         }
@@ -4498,6 +4553,12 @@ static int multiwrite_merge(BlockDriverState *bs, BlockRequest *reqs,
             // Add the second request
             qemu_iovec_concat(qiov, reqs[i].qiov, 0, reqs[i].qiov->size);
 
+            // Add tail of first request, if necessary
+            if (qiov->size < reqs[outidx].qiov->size) {
+                qemu_iovec_concat(qiov, reqs[outidx].qiov, qiov->size,
+                                  reqs[outidx].qiov->size - qiov->size);
+            }
+
             reqs[outidx].nb_sectors = qiov->size >> 9;
             reqs[outidx].qiov = qiov;
 
@@ -4607,8 +4668,9 @@ static void bdrv_aio_bh_cb(void *opaque)
 {
     BlockDriverAIOCBSync *acb = opaque;
 
-    if (!acb->is_write)
+    if (!acb->is_write && acb->ret >= 0) {
         qemu_iovec_from_buf(acb->qiov, 0, acb->bounce, acb->qiov->size);
+    }
     qemu_vfree(acb->bounce);
     acb->common.cb(acb->common.opaque, acb->ret);
     qemu_bh_delete(acb->bh);
@@ -4630,10 +4692,12 @@ static BlockDriverAIOCB *bdrv_aio_rw_vector(BlockDriverState *bs,
     acb = qemu_aio_get(&bdrv_em_aiocb_info, bs, cb, opaque);
     acb->is_write = is_write;
     acb->qiov = qiov;
-    acb->bounce = qemu_blockalign(bs, qiov->size);
+    acb->bounce = qemu_try_blockalign(bs, qiov->size);
     acb->bh = aio_bh_new(bdrv_get_aio_context(bs), bdrv_aio_bh_cb, acb);
 
-    if (is_write) {
+    if (acb->bounce == NULL) {
+        acb->ret = -ENOMEM;
+    } else if (is_write) {
         qemu_iovec_to_buf(acb->qiov, 0, acb->bounce, qiov->size);
         acb->ret = bs->drv->bdrv_write(bs, sector_num, acb->bounce, nb_sectors);
     } else {
@@ -5247,6 +5311,19 @@ void *qemu_blockalign(BlockDriverState *bs, size_t size)
     return qemu_memalign(bdrv_opt_mem_align(bs), size);
 }
 
+void *qemu_try_blockalign(BlockDriverState *bs, size_t size)
+{
+    size_t align = bdrv_opt_mem_align(bs);
+
+    /* Ensure that NULL is never returned on success */
+    assert(align > 0);
+    if (size == 0) {
+        size = align;
+    }
+
+    return qemu_try_memalign(align, size);
+}
+
 /*
  * Check if all memory in this vector is sector aligned.
  */
@@ -5277,14 +5354,13 @@ BdrvDirtyBitmap *bdrv_create_dirty_bitmap(BlockDriverState *bs, int granularity,
 
     granularity >>= BDRV_SECTOR_BITS;
     assert(granularity);
-    bitmap_size = bdrv_getlength(bs);
+    bitmap_size = bdrv_nb_sectors(bs);
     if (bitmap_size < 0) {
         error_setg_errno(errp, -bitmap_size, "could not get length of device");
         errno = -bitmap_size;
         return NULL;
     }
-    bitmap_size >>= BDRV_SECTOR_BITS;
-    bitmap = g_malloc0(sizeof(BdrvDirtyBitmap));
+    bitmap = g_new0(BdrvDirtyBitmap, 1);
     bitmap->bitmap = hbitmap_alloc(bitmap_size, ffs(granularity) - 1);
     QLIST_INSERT_HEAD(&bs->dirty_bitmaps, bitmap, list);
     return bitmap;
@@ -5310,8 +5386,8 @@ BlockDirtyInfoList *bdrv_query_dirty_bitmaps(BlockDriverState *bs)
     BlockDirtyInfoList **plist = &list;
 
     QLIST_FOREACH(bm, &bs->dirty_bitmaps, list) {
-        BlockDirtyInfo *info = g_malloc0(sizeof(BlockDirtyInfo));
-        BlockDirtyInfoList *entry = g_malloc0(sizeof(BlockDirtyInfoList));
+        BlockDirtyInfo *info = g_new0(BlockDirtyInfo, 1);
+        BlockDirtyInfoList *entry = g_new0(BlockDirtyInfoList, 1);
         info->count = bdrv_get_dirty_count(bs, bm);
         info->granularity =
             ((int64_t) BDRV_SECTOR_SIZE << hbitmap_granularity(bm->bitmap));
@@ -5371,6 +5447,9 @@ void bdrv_ref(BlockDriverState *bs)
  * deleted. */
 void bdrv_unref(BlockDriverState *bs)
 {
+    if (!bs) {
+        return;
+    }
     assert(bs->refcnt > 0);
     if (--bs->refcnt == 0) {
         bdrv_delete(bs);
@@ -5402,7 +5481,7 @@ void bdrv_op_block(BlockDriverState *bs, BlockOpType op, Error *reason)
     BdrvOpBlocker *blocker;
     assert((int) op >= 0 && op < BLOCK_OP_TYPE_MAX);
 
-    blocker = g_malloc0(sizeof(BdrvOpBlocker));
+    blocker = g_new0(BdrvOpBlocker, 1);
     blocker->reason = reason;
     QLIST_INSERT_HEAD(&bs->op_blockers[op], blocker, list);
 }
@@ -5591,7 +5670,7 @@ void bdrv_img_create(const char *filename, const char *fmt,
     if (size == -1) {
         if (backing_file) {
             BlockDriverState *bs;
-            uint64_t size;
+            int64_t size;
             int back_flags;
 
             /* backing files always opened read-only */
@@ -5609,8 +5688,13 @@ void bdrv_img_create(const char *filename, const char *fmt,
                 local_err = NULL;
                 goto out;
             }
-            bdrv_get_geometry(bs, &size);
-            size *= 512;
+            size = bdrv_getlength(bs);
+            if (size < 0) {
+                error_setg_errno(errp, -size, "Could not get size of '%s'",
+                                 backing_file);
+                bdrv_unref(bs);
+                goto out;
+            }
 
             qemu_opt_set_number(opts, BLOCK_OPT_SIZE, size);
 
@@ -5658,8 +5742,14 @@ AioContext *bdrv_get_aio_context(BlockDriverState *bs)
 
 void bdrv_detach_aio_context(BlockDriverState *bs)
 {
+    BdrvAioNotifier *baf;
+
     if (!bs->drv) {
         return;
+    }
+
+    QLIST_FOREACH(baf, &bs->aio_notifiers, list) {
+        baf->detach_aio_context(baf->opaque);
     }
 
     if (bs->io_limits_enabled) {
@@ -5681,6 +5771,8 @@ void bdrv_detach_aio_context(BlockDriverState *bs)
 void bdrv_attach_aio_context(BlockDriverState *bs,
                              AioContext *new_context)
 {
+    BdrvAioNotifier *ban;
+
     if (!bs->drv) {
         return;
     }
@@ -5699,6 +5791,10 @@ void bdrv_attach_aio_context(BlockDriverState *bs,
     if (bs->io_limits_enabled) {
         throttle_attach_aio_context(&bs->throttle_state, new_context);
     }
+
+    QLIST_FOREACH(ban, &bs->aio_notifiers, list) {
+        ban->attached_aio_context(new_context, ban->opaque);
+    }
 }
 
 void bdrv_set_aio_context(BlockDriverState *bs, AioContext *new_context)
@@ -5713,6 +5809,43 @@ void bdrv_set_aio_context(BlockDriverState *bs, AioContext *new_context)
     aio_context_acquire(new_context);
     bdrv_attach_aio_context(bs, new_context);
     aio_context_release(new_context);
+}
+
+void bdrv_add_aio_context_notifier(BlockDriverState *bs,
+        void (*attached_aio_context)(AioContext *new_context, void *opaque),
+        void (*detach_aio_context)(void *opaque), void *opaque)
+{
+    BdrvAioNotifier *ban = g_new(BdrvAioNotifier, 1);
+    *ban = (BdrvAioNotifier){
+        .attached_aio_context = attached_aio_context,
+        .detach_aio_context   = detach_aio_context,
+        .opaque               = opaque
+    };
+
+    QLIST_INSERT_HEAD(&bs->aio_notifiers, ban, list);
+}
+
+void bdrv_remove_aio_context_notifier(BlockDriverState *bs,
+                                      void (*attached_aio_context)(AioContext *,
+                                                                   void *),
+                                      void (*detach_aio_context)(void *),
+                                      void *opaque)
+{
+    BdrvAioNotifier *ban, *ban_next;
+
+    QLIST_FOREACH_SAFE(ban, &bs->aio_notifiers, list, ban_next) {
+        if (ban->attached_aio_context == attached_aio_context &&
+            ban->detach_aio_context   == detach_aio_context   &&
+            ban->opaque               == opaque)
+        {
+            QLIST_REMOVE(ban, list);
+            g_free(ban);
+
+            return;
+        }
+    }
+
+    abort();
 }
 
 void bdrv_add_before_write_notifier(BlockDriverState *bs,
@@ -5838,5 +5971,135 @@ void bdrv_flush_io_queue(BlockDriverState *bs)
         drv->bdrv_flush_io_queue(bs);
     } else if (bs->file) {
         bdrv_flush_io_queue(bs->file);
+    }
+}
+
+static bool append_open_options(QDict *d, BlockDriverState *bs)
+{
+    const QDictEntry *entry;
+    bool found_any = false;
+
+    for (entry = qdict_first(bs->options); entry;
+         entry = qdict_next(bs->options, entry))
+    {
+        /* Only take options for this level and exclude all non-driver-specific
+         * options */
+        if (!strchr(qdict_entry_key(entry), '.') &&
+            strcmp(qdict_entry_key(entry), "node-name"))
+        {
+            qobject_incref(qdict_entry_value(entry));
+            qdict_put_obj(d, qdict_entry_key(entry), qdict_entry_value(entry));
+            found_any = true;
+        }
+    }
+
+    return found_any;
+}
+
+/* Updates the following BDS fields:
+ *  - exact_filename: A filename which may be used for opening a block device
+ *                    which (mostly) equals the given BDS (even without any
+ *                    other options; so reading and writing must return the same
+ *                    results, but caching etc. may be different)
+ *  - full_open_options: Options which, when given when opening a block device
+ *                       (without a filename), result in a BDS (mostly)
+ *                       equalling the given one
+ *  - filename: If exact_filename is set, it is copied here. Otherwise,
+ *              full_open_options is converted to a JSON object, prefixed with
+ *              "json:" (for use through the JSON pseudo protocol) and put here.
+ */
+void bdrv_refresh_filename(BlockDriverState *bs)
+{
+    BlockDriver *drv = bs->drv;
+    QDict *opts;
+
+    if (!drv) {
+        return;
+    }
+
+    /* This BDS's file name will most probably depend on its file's name, so
+     * refresh that first */
+    if (bs->file) {
+        bdrv_refresh_filename(bs->file);
+    }
+
+    if (drv->bdrv_refresh_filename) {
+        /* Obsolete information is of no use here, so drop the old file name
+         * information before refreshing it */
+        bs->exact_filename[0] = '\0';
+        if (bs->full_open_options) {
+            QDECREF(bs->full_open_options);
+            bs->full_open_options = NULL;
+        }
+
+        drv->bdrv_refresh_filename(bs);
+    } else if (bs->file) {
+        /* Try to reconstruct valid information from the underlying file */
+        bool has_open_options;
+
+        bs->exact_filename[0] = '\0';
+        if (bs->full_open_options) {
+            QDECREF(bs->full_open_options);
+            bs->full_open_options = NULL;
+        }
+
+        opts = qdict_new();
+        has_open_options = append_open_options(opts, bs);
+
+        /* If no specific options have been given for this BDS, the filename of
+         * the underlying file should suffice for this one as well */
+        if (bs->file->exact_filename[0] && !has_open_options) {
+            strcpy(bs->exact_filename, bs->file->exact_filename);
+        }
+        /* Reconstructing the full options QDict is simple for most format block
+         * drivers, as long as the full options are known for the underlying
+         * file BDS. The full options QDict of that file BDS should somehow
+         * contain a representation of the filename, therefore the following
+         * suffices without querying the (exact_)filename of this BDS. */
+        if (bs->file->full_open_options) {
+            qdict_put_obj(opts, "driver",
+                          QOBJECT(qstring_from_str(drv->format_name)));
+            QINCREF(bs->file->full_open_options);
+            qdict_put_obj(opts, "file", QOBJECT(bs->file->full_open_options));
+
+            bs->full_open_options = opts;
+        } else {
+            QDECREF(opts);
+        }
+    } else if (!bs->full_open_options && qdict_size(bs->options)) {
+        /* There is no underlying file BDS (at least referenced by BDS.file),
+         * so the full options QDict should be equal to the options given
+         * specifically for this block device when it was opened (plus the
+         * driver specification).
+         * Because those options don't change, there is no need to update
+         * full_open_options when it's already set. */
+
+        opts = qdict_new();
+        append_open_options(opts, bs);
+        qdict_put_obj(opts, "driver",
+                      QOBJECT(qstring_from_str(drv->format_name)));
+
+        if (bs->exact_filename[0]) {
+            /* This may not work for all block protocol drivers (some may
+             * require this filename to be parsed), but we have to find some
+             * default solution here, so just include it. If some block driver
+             * does not support pure options without any filename at all or
+             * needs some special format of the options QDict, it needs to
+             * implement the driver-specific bdrv_refresh_filename() function.
+             */
+            qdict_put_obj(opts, "filename",
+                          QOBJECT(qstring_from_str(bs->exact_filename)));
+        }
+
+        bs->full_open_options = opts;
+    }
+
+    if (bs->exact_filename[0]) {
+        pstrcpy(bs->filename, sizeof(bs->filename), bs->exact_filename);
+    } else if (bs->full_open_options) {
+        QString *json = qobject_to_json(QOBJECT(bs->full_open_options));
+        snprintf(bs->filename, sizeof(bs->filename), "json:%s",
+                 qstring_get_str(json));
+        QDECREF(json);
     }
 }

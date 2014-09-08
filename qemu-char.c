@@ -975,7 +975,7 @@ static CharDriverState *qemu_chr_open_fd(int fd_in, int fd_out)
     s = g_malloc0(sizeof(FDCharDriver));
     s->fd_in = io_channel_from_fd(fd_in);
     s->fd_out = io_channel_from_fd(fd_out);
-    fcntl(fd_out, F_SETFL, O_NONBLOCK);
+    qemu_set_nonblock(fd_out);
     s->chr = chr;
     chr->opaque = s;
     chr->chr_add_watch = fd_chr_add_watch;
@@ -1062,7 +1062,7 @@ static CharDriverState *qemu_chr_open_stdio(ChardevStdio *opts)
     }
     old_fd0_flags = fcntl(0, F_GETFL);
     tcgetattr (0, &oldtty);
-    fcntl(0, F_SETFL, O_NONBLOCK);
+    qemu_set_nonblock(0);
     atexit(term_exit);
 
     chr = qemu_chr_open_fd(0, 1);
@@ -1160,7 +1160,9 @@ static int pty_chr_write(CharDriverState *chr, const uint8_t *buf, int len)
     if (!s->connected) {
         /* guest sends data, check for (re-)connect */
         pty_chr_update_read_handler_locked(chr);
-        return 0;
+        if (!s->connected) {
+            return 0;
+        }
     }
     return io_channel_send(s->fd, buf, len);
 }
@@ -3256,6 +3258,7 @@ QemuOpts *qemu_chr_parse_compat(const char *label, const char *filename)
         strcmp(filename, "pty")     == 0 ||
         strcmp(filename, "msmouse") == 0 ||
         strcmp(filename, "braille") == 0 ||
+        strcmp(filename, "testdev") == 0 ||
         strcmp(filename, "stdio")   == 0) {
         qemu_opt_set(opts, "backend", filename);
         return opts;
@@ -4057,6 +4060,9 @@ ChardevReturn *qmp_chardev_add(const char *id, ChardevBackend *backend,
         chr = chr_baum_init();
         break;
 #endif
+    case CHARDEV_BACKEND_KIND_TESTDEV:
+        chr = chr_testdev_init();
+        break;
     case CHARDEV_BACKEND_KIND_STDIO:
         chr = qemu_chr_open_stdio(backend->stdio);
         break;
@@ -4117,7 +4123,7 @@ void qmp_chardev_remove(const char *id, Error **errp)
     CharDriverState *chr;
 
     chr = qemu_chr_find(id);
-    if (NULL == chr) {
+    if (chr == NULL) {
         error_setg(errp, "Chardev '%s' not found", id);
         return;
     }

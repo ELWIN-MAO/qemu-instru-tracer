@@ -442,6 +442,22 @@ static QemuOptsList qcow2_runtime_opts = {
             .type = QEMU_OPT_BOOL,
             .help = "Check for unintended writes into an inactive L2 table",
         },
+        {
+            .name = QCOW2_OPT_CACHE_SIZE,
+            .type = QEMU_OPT_SIZE,
+            .help = "Maximum combined metadata (L2 tables and refcount blocks) "
+                    "cache size",
+        },
+        {
+            .name = QCOW2_OPT_L2_CACHE_SIZE,
+            .type = QEMU_OPT_SIZE,
+            .help = "Maximum L2 table cache size",
+        },
+        {
+            .name = QCOW2_OPT_REFCOUNT_CACHE_SIZE,
+            .type = QEMU_OPT_SIZE,
+            .help = "Maximum refcount block cache size",
+        },
         { /* end of list */ }
     },
 };
@@ -457,6 +473,61 @@ static const char *overlap_bool_option_names[QCOW2_OL_MAX_BITNR] = {
     [QCOW2_OL_INACTIVE_L2_BITNR]    = QCOW2_OPT_OVERLAP_INACTIVE_L2,
 };
 
+static void read_cache_sizes(QemuOpts *opts, uint64_t *l2_cache_size,
+                             uint64_t *refcount_cache_size, Error **errp)
+{
+    uint64_t combined_cache_size;
+    bool l2_cache_size_set, refcount_cache_size_set, combined_cache_size_set;
+
+    combined_cache_size_set = qemu_opt_get(opts, QCOW2_OPT_CACHE_SIZE);
+    l2_cache_size_set = qemu_opt_get(opts, QCOW2_OPT_L2_CACHE_SIZE);
+    refcount_cache_size_set = qemu_opt_get(opts, QCOW2_OPT_REFCOUNT_CACHE_SIZE);
+
+    combined_cache_size = qemu_opt_get_size(opts, QCOW2_OPT_CACHE_SIZE, 0);
+    *l2_cache_size = qemu_opt_get_size(opts, QCOW2_OPT_L2_CACHE_SIZE, 0);
+    *refcount_cache_size = qemu_opt_get_size(opts,
+                                             QCOW2_OPT_REFCOUNT_CACHE_SIZE, 0);
+
+    if (combined_cache_size_set) {
+        if (l2_cache_size_set && refcount_cache_size_set) {
+            error_setg(errp, QCOW2_OPT_CACHE_SIZE ", " QCOW2_OPT_L2_CACHE_SIZE
+                       " and " QCOW2_OPT_REFCOUNT_CACHE_SIZE " may not be set "
+                       "the same time");
+            return;
+        } else if (*l2_cache_size > combined_cache_size) {
+            error_setg(errp, QCOW2_OPT_L2_CACHE_SIZE " may not exceed "
+                       QCOW2_OPT_CACHE_SIZE);
+            return;
+        } else if (*refcount_cache_size > combined_cache_size) {
+            error_setg(errp, QCOW2_OPT_REFCOUNT_CACHE_SIZE " may not exceed "
+                       QCOW2_OPT_CACHE_SIZE);
+            return;
+        }
+
+        if (l2_cache_size_set) {
+            *refcount_cache_size = combined_cache_size - *l2_cache_size;
+        } else if (refcount_cache_size_set) {
+            *l2_cache_size = combined_cache_size - *refcount_cache_size;
+        } else {
+            *refcount_cache_size = combined_cache_size
+                                 / (DEFAULT_L2_REFCOUNT_SIZE_RATIO + 1);
+            *l2_cache_size = combined_cache_size - *refcount_cache_size;
+        }
+    } else {
+        if (!l2_cache_size_set && !refcount_cache_size_set) {
+            *l2_cache_size = DEFAULT_L2_CACHE_BYTE_SIZE;
+            *refcount_cache_size = *l2_cache_size
+                                 / DEFAULT_L2_REFCOUNT_SIZE_RATIO;
+        } else if (!l2_cache_size_set) {
+            *l2_cache_size = *refcount_cache_size
+                           * DEFAULT_L2_REFCOUNT_SIZE_RATIO;
+        } else if (!refcount_cache_size_set) {
+            *refcount_cache_size = *l2_cache_size
+                                 / DEFAULT_L2_REFCOUNT_SIZE_RATIO;
+        }
+    }
+}
+
 static int qcow2_open(BlockDriverState *bs, QDict *options, int flags,
                       Error **errp)
 {
@@ -470,6 +541,7 @@ static int qcow2_open(BlockDriverState *bs, QDict *options, int flags,
     uint64_t l1_vm_state_index;
     const char *opt_overlap_check;
     int overlap_check_template = 0;
+    uint64_t l2_cache_size, refcount_cache_size;
 
     ret = bdrv_pread(bs->file, 0, &header, sizeof(header));
     if (ret < 0) {
@@ -688,8 +760,13 @@ static int qcow2_open(BlockDriverState *bs, QDict *options, int flags,
 
 
     if (s->l1_size > 0) {
-        s->l1_table = g_malloc0(
+        s->l1_table = qemu_try_blockalign(bs->file,
             align_offset(s->l1_size * sizeof(uint64_t), 512));
+        if (s->l1_table == NULL) {
+            error_setg(errp, "Could not allocate L1 table");
+            ret = -ENOMEM;
+            goto fail;
+        }
         ret = bdrv_pread(bs->file, s->l1_table_offset, s->l1_table,
                          s->l1_size * sizeof(uint64_t));
         if (ret < 0) {
@@ -701,14 +778,61 @@ static int qcow2_open(BlockDriverState *bs, QDict *options, int flags,
         }
     }
 
+    /* get L2 table/refcount block cache size from command line options */
+    opts = qemu_opts_create(&qcow2_runtime_opts, NULL, 0, &error_abort);
+    qemu_opts_absorb_qdict(opts, options, &local_err);
+    if (local_err) {
+        error_propagate(errp, local_err);
+        ret = -EINVAL;
+        goto fail;
+    }
+
+    read_cache_sizes(opts, &l2_cache_size, &refcount_cache_size, &local_err);
+    if (local_err) {
+        error_propagate(errp, local_err);
+        ret = -EINVAL;
+        goto fail;
+    }
+
+    l2_cache_size /= s->cluster_size;
+    if (l2_cache_size < MIN_L2_CACHE_SIZE) {
+        l2_cache_size = MIN_L2_CACHE_SIZE;
+    }
+    if (l2_cache_size > INT_MAX) {
+        error_setg(errp, "L2 cache size too big");
+        ret = -EINVAL;
+        goto fail;
+    }
+
+    refcount_cache_size /= s->cluster_size;
+    if (refcount_cache_size < MIN_REFCOUNT_CACHE_SIZE) {
+        refcount_cache_size = MIN_REFCOUNT_CACHE_SIZE;
+    }
+    if (refcount_cache_size > INT_MAX) {
+        error_setg(errp, "Refcount cache size too big");
+        ret = -EINVAL;
+        goto fail;
+    }
+
     /* alloc L2 table/refcount block cache */
-    s->l2_table_cache = qcow2_cache_create(bs, L2_CACHE_SIZE);
-    s->refcount_block_cache = qcow2_cache_create(bs, REFCOUNT_CACHE_SIZE);
+    s->l2_table_cache = qcow2_cache_create(bs, l2_cache_size);
+    s->refcount_block_cache = qcow2_cache_create(bs, refcount_cache_size);
+    if (s->l2_table_cache == NULL || s->refcount_block_cache == NULL) {
+        error_setg(errp, "Could not allocate metadata caches");
+        ret = -ENOMEM;
+        goto fail;
+    }
 
     s->cluster_cache = g_malloc(s->cluster_size);
     /* one more sector for decompressed data alignment */
-    s->cluster_data = qemu_blockalign(bs, QCOW_MAX_CRYPT_CLUSTERS * s->cluster_size
-                                  + 512);
+    s->cluster_data = qemu_try_blockalign(bs->file, QCOW_MAX_CRYPT_CLUSTERS
+                                                    * s->cluster_size + 512);
+    if (s->cluster_data == NULL) {
+        error_setg(errp, "Could not allocate temporary cluster buffer");
+        ret = -ENOMEM;
+        goto fail;
+    }
+
     s->cluster_cache_offset = -1;
     s->flags = flags;
 
@@ -782,14 +906,6 @@ static int qcow2_open(BlockDriverState *bs, QDict *options, int flags,
     }
 
     /* Enable lazy_refcounts according to image and command line options */
-    opts = qemu_opts_create(&qcow2_runtime_opts, NULL, 0, &error_abort);
-    qemu_opts_absorb_qdict(opts, options, &local_err);
-    if (local_err) {
-        error_propagate(errp, local_err);
-        ret = -EINVAL;
-        goto fail;
-    }
-
     s->use_lazy_refcounts = qemu_opt_get_bool(opts, QCOW2_OPT_LAZY_REFCOUNTS,
         (s->compatible_features & QCOW2_COMPAT_LAZY_REFCOUNTS));
 
@@ -852,7 +968,7 @@ static int qcow2_open(BlockDriverState *bs, QDict *options, int flags,
     cleanup_unknown_header_ext(bs);
     qcow2_free_snapshots(bs);
     qcow2_refcount_close(bs);
-    g_free(s->l1_table);
+    qemu_vfree(s->l1_table);
     /* else pre-write overlap checks in cache_destroy may crash */
     s->l1_table = NULL;
     if (s->l2_table_cache) {
@@ -1082,7 +1198,12 @@ static coroutine_fn int qcow2_co_readv(BlockDriverState *bs, int64_t sector_num,
                  */
                 if (!cluster_data) {
                     cluster_data =
-                        qemu_blockalign(bs, QCOW_MAX_CRYPT_CLUSTERS * s->cluster_size);
+                        qemu_try_blockalign(bs->file, QCOW_MAX_CRYPT_CLUSTERS
+                                                      * s->cluster_size);
+                    if (cluster_data == NULL) {
+                        ret = -ENOMEM;
+                        goto fail;
+                    }
                 }
 
                 assert(cur_nr_sectors <=
@@ -1182,8 +1303,13 @@ static coroutine_fn int qcow2_co_writev(BlockDriverState *bs,
 
         if (s->crypt_method) {
             if (!cluster_data) {
-                cluster_data = qemu_blockalign(bs, QCOW_MAX_CRYPT_CLUSTERS *
-                                                 s->cluster_size);
+                cluster_data = qemu_try_blockalign(bs->file,
+                                                   QCOW_MAX_CRYPT_CLUSTERS
+                                                   * s->cluster_size);
+                if (cluster_data == NULL) {
+                    ret = -ENOMEM;
+                    goto fail;
+                }
             }
 
             assert(hd_qiov.size <=
@@ -1270,7 +1396,7 @@ fail:
 static void qcow2_close(BlockDriverState *bs)
 {
     BDRVQcowState *s = bs->opaque;
-    g_free(s->l1_table);
+    qemu_vfree(s->l1_table);
     /* else pre-write overlap checks in cache_destroy may crash */
     s->l1_table = NULL;
 
@@ -1557,7 +1683,7 @@ static int preallocate(BlockDriverState *bs)
     int ret;
     QCowL2Meta *meta;
 
-    nb_sectors = bdrv_getlength(bs) >> BDRV_SECTOR_BITS;
+    nb_sectors = bdrv_nb_sectors(bs);
     offset = 0;
 
     while (nb_sectors) {
@@ -1947,7 +2073,6 @@ static int qcow2_write_compressed(BlockDriverState *bs, int64_t sector_num,
         /* align end of file to a sector boundary to ease reading with
            sector based I/Os */
         cluster_offset = bdrv_getlength(bs->file);
-        cluster_offset = (cluster_offset + 511) & ~511;
         bdrv_truncate(bs->file, cluster_offset);
         return 0;
     }

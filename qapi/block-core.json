@@ -115,6 +115,8 @@
 # @format-specific: #optional structure supplying additional format-specific
 # information (since 1.7)
 #
+# @nocow: #optional info of whether NOCOW flag is set or not. (since 2.2)
+#
 # Since: 1.3
 #
 ##
@@ -126,7 +128,8 @@
            '*backing-filename': 'str', '*full-backing-filename': 'str',
            '*backing-filename-format': 'str', '*snapshots': ['SnapshotInfo'],
            '*backing-image': 'ImageInfo',
-           '*format-specific': 'ImageInfoSpecific' } }
+           '*format-specific': 'ImageInfoSpecific',
+           '*nocow': 'bool' } }
 
 ##
 # @ImageCheck:
@@ -194,6 +197,7 @@
 #       'file', 'file', 'ftp', 'ftps', 'host_cdrom', 'host_device',
 #       'host_floppy', 'http', 'https', 'nbd', 'parallels', 'qcow',
 #       'qcow2', 'raw', 'tftp', 'vdi', 'vmdk', 'vpc', 'vvfat'
+#       2.2: 'archipelago'
 #
 # @backing_file: #optional the name of the backing file (for copy-on-write)
 #
@@ -1143,7 +1147,7 @@
 # Since: 2.0
 ##
 { 'enum': 'BlockdevDriver',
-  'data': [ 'file', 'host_device', 'host_cdrom', 'host_floppy',
+  'data': [ 'archipelago', 'file', 'host_device', 'host_cdrom', 'host_floppy',
             'http', 'https', 'ftp', 'ftps', 'tftp', 'vvfat', 'blkdebug',
             'blkverify', 'bochs', 'cloop', 'cow', 'dmg', 'parallels', 'qcow',
             'qcow2', 'qed', 'raw', 'vdi', 'vhdx', 'vmdk', 'vpc', 'quorum' ] }
@@ -1273,6 +1277,37 @@
             '*pass-discard-snapshot': 'bool',
             '*pass-discard-other': 'bool' } }
 
+
+##
+# @BlockdevOptionsArchipelago
+#
+# Driver specific block device options for Archipelago.
+#
+# @volume:              Name of the Archipelago volume image
+#
+# @mport:               #optional The port number on which mapperd is
+#                       listening. This is optional
+#                       and if not specified, QEMU will make Archipelago
+#                       use the default port (1001).
+#
+# @vport:               #optional The port number on which vlmcd is
+#                       listening. This is optional
+#                       and if not specified, QEMU will make Archipelago
+#                       use the default port (501).
+#
+# @segment:             #optional The name of the shared memory segment
+#                       Archipelago stack is using. This is optional
+#                       and if not specified, QEMU will make Archipelago
+#                       use the default value, 'archipelago'.
+# Since: 2.2
+##
+{ 'type': 'BlockdevOptionsArchipelago',
+  'data': { 'volume': 'str',
+            '*mport': 'int',
+            '*vport': 'int',
+            '*segment': 'str' } }
+
+
 ##
 # @BlkdebugEvent
 #
@@ -1384,6 +1419,19 @@
             'raw': 'BlockdevRef' } }
 
 ##
+# @QuorumReadPattern
+#
+# An enumeration of quorum read patterns.
+#
+# @quorum: read all the children and do a quorum vote on reads
+#
+# @fifo: read only from the first child that has not failed
+#
+# Since: 2.2
+##
+{ 'enum': 'QuorumReadPattern', 'data': [ 'quorum', 'fifo' ] }
+
+##
 # @BlockdevOptionsQuorum
 #
 # Driver specific block device options for Quorum
@@ -1398,12 +1446,17 @@
 # @rewrite-corrupted: #optional rewrite corrupted data when quorum is reached
 #                     (Since 2.1)
 #
+# @read-pattern: #optional choose read pattern and set to quorum by default
+#                (Since 2.2)
+#
 # Since: 2.0
 ##
 { 'type': 'BlockdevOptionsQuorum',
   'data': { '*blkverify': 'bool',
             'children': [ 'BlockdevRef' ],
-            'vote-threshold': 'int', '*rewrite-corrupted': 'bool' } }
+            'vote-threshold': 'int',
+            '*rewrite-corrupted': 'bool',
+            '*read-pattern': 'QuorumReadPattern' } }
 
 ##
 # @BlockdevOptions
@@ -1416,6 +1469,7 @@
   'base': 'BlockdevOptionsBase',
   'discriminator': 'driver',
   'data': {
+      'archipelago':'BlockdevOptionsArchipelago',
       'file':       'BlockdevOptionsFile',
       'host_device':'BlockdevOptionsFile',
       'host_cdrom': 'BlockdevOptionsFile',

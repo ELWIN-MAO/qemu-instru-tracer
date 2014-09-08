@@ -56,8 +56,7 @@ static void memory_init(void)
 typedef struct AddrRange AddrRange;
 
 /*
- * Note using signed integers limits us to physical addresses at most
- * 63 bits wide.  They are needed for negative offsetting in aliases
+ * Note that signed integers are needed for negative offsetting in aliases
  * (large MemoryRegion::alias_offset).
  */
 struct AddrRange {
@@ -877,30 +876,6 @@ static char *memory_region_escape_name(const char *name)
     return escaped;
 }
 
-static void object_property_add_child_array(Object *owner,
-                                            const char *name,
-                                            Object *child)
-{
-    int i;
-    char *base_name = memory_region_escape_name(name);
-
-    for (i = 0; ; i++) {
-        char *full_name = g_strdup_printf("%s[%d]", base_name, i);
-        Error *local_err = NULL;
-
-        object_property_add_child(owner, full_name, child, &local_err);
-        g_free(full_name);
-        if (!local_err) {
-            break;
-        }
-
-        error_free(local_err);
-    }
-
-    g_free(base_name);
-}
-        
-
 void memory_region_init(MemoryRegion *mr,
                         Object *owner,
                         const char *name,
@@ -918,8 +893,12 @@ void memory_region_init(MemoryRegion *mr,
     mr->name = g_strdup(name);
 
     if (name) {
-        object_property_add_child_array(owner, name, OBJECT(mr));
+        char *escaped_name = memory_region_escape_name(name);
+        char *name_array = g_strdup_printf("%s[*]", escaped_name);
+        object_property_add_child(owner, name_array, OBJECT(mr), &error_abort);
         object_unref(OBJECT(mr));
+        g_free(name_array);
+        g_free(escaped_name);
     }
 }
 
@@ -1264,12 +1243,6 @@ static void memory_region_finalize(Object *obj)
     g_free(mr->ioeventfds);
 }
 
-void memory_region_destroy(MemoryRegion *mr)
-{
-    object_unparent(OBJECT(mr));
-}
-
-
 Object *memory_region_owner(MemoryRegion *mr)
 {
     Object *obj = OBJECT(mr);
@@ -1314,8 +1287,12 @@ uint64_t memory_region_size(MemoryRegion *mr)
     return int128_get64(mr->size);
 }
 
-const char *memory_region_name(MemoryRegion *mr)
+const char *memory_region_name(const MemoryRegion *mr)
 {
+    if (!mr->name) {
+        ((MemoryRegion *)mr)->name =
+            object_get_canonical_path_component(OBJECT(mr));
+    }
     return mr->name;
 }
 
@@ -1980,7 +1957,6 @@ typedef struct MemoryRegionList MemoryRegionList;
 
 struct MemoryRegionList {
     const MemoryRegion *mr;
-    bool printed;
     QTAILQ_ENTRY(MemoryRegionList) queue;
 };
 
@@ -2010,7 +1986,7 @@ static void mtree_print_mr(fprintf_function mon_printf, void *f,
 
         /* check if the alias is already in the queue */
         QTAILQ_FOREACH(ml, alias_print_queue, queue) {
-            if (ml->mr == mr->alias && !ml->printed) {
+            if (ml->mr == mr->alias) {
                 found = true;
             }
         }
@@ -2018,7 +1994,6 @@ static void mtree_print_mr(fprintf_function mon_printf, void *f,
         if (!found) {
             ml = g_new(MemoryRegionList, 1);
             ml->mr = mr->alias;
-            ml->printed = false;
             QTAILQ_INSERT_TAIL(alias_print_queue, ml, queue);
         }
         mon_printf(f, TARGET_FMT_plx "-" TARGET_FMT_plx
@@ -2033,8 +2008,8 @@ static void mtree_print_mr(fprintf_function mon_printf, void *f,
                    mr->romd_mode ? 'R' : '-',
                    !mr->readonly && !(mr->rom_device && mr->romd_mode) ? 'W'
                                                                        : '-',
-                   mr->name,
-                   mr->alias->name,
+                   memory_region_name(mr),
+                   memory_region_name(mr->alias),
                    mr->alias_offset,
                    mr->alias_offset
                    + (int128_nz(mr->size) ?
@@ -2052,7 +2027,7 @@ static void mtree_print_mr(fprintf_function mon_printf, void *f,
                    mr->romd_mode ? 'R' : '-',
                    !mr->readonly && !(mr->rom_device && mr->romd_mode) ? 'W'
                                                                        : '-',
-                   mr->name);
+                   memory_region_name(mr));
     }
 
     QTAILQ_INIT(&submr_print_queue);
@@ -2100,10 +2075,8 @@ void mtree_info(fprintf_function mon_printf, void *f)
     mon_printf(f, "aliases\n");
     /* print aliased regions */
     QTAILQ_FOREACH(ml, &ml_head, queue) {
-        if (!ml->printed) {
-            mon_printf(f, "%s\n", ml->mr->name);
-            mtree_print_mr(mon_printf, f, ml->mr, 0, 0, &ml_head);
-        }
+        mon_printf(f, "%s\n", memory_region_name(ml->mr));
+        mtree_print_mr(mon_printf, f, ml->mr, 0, 0, &ml_head);
     }
 
     QTAILQ_FOREACH_SAFE(ml, &ml_head, queue, ml2) {

@@ -373,7 +373,7 @@ MemoryRegion *address_space_translate(AddressSpace *as, hwaddr addr,
             break;
         }
 
-        iotlb = mr->iommu_ops->translate(mr, addr);
+        iotlb = mr->iommu_ops->translate(mr, addr, is_write);
         addr = ((iotlb.translated_addr & ~iotlb.addr_mask)
                 | (addr & iotlb.addr_mask));
         len = MIN(len, (addr | iotlb.addr_mask) - addr + 1);
@@ -430,15 +430,50 @@ static int cpu_common_post_load(void *opaque, int version_id)
     return 0;
 }
 
+static int cpu_common_pre_load(void *opaque)
+{
+    CPUState *cpu = opaque;
+
+    cpu->exception_index = 0;
+
+    return 0;
+}
+
+static bool cpu_common_exception_index_needed(void *opaque)
+{
+    CPUState *cpu = opaque;
+
+    return cpu->exception_index != 0;
+}
+
+static const VMStateDescription vmstate_cpu_common_exception_index = {
+    .name = "cpu_common/exception_index",
+    .version_id = 1,
+    .minimum_version_id = 1,
+    .fields = (VMStateField[]) {
+        VMSTATE_INT32(exception_index, CPUState),
+        VMSTATE_END_OF_LIST()
+    }
+};
+
 const VMStateDescription vmstate_cpu_common = {
     .name = "cpu_common",
     .version_id = 1,
     .minimum_version_id = 1,
+    .pre_load = cpu_common_pre_load,
     .post_load = cpu_common_post_load,
     .fields = (VMStateField[]) {
         VMSTATE_UINT32(halted, CPUState),
         VMSTATE_UINT32(interrupt_request, CPUState),
         VMSTATE_END_OF_LIST()
+    },
+    .subsections = (VMStateSubsection[]) {
+        {
+            .vmsd = &vmstate_cpu_common_exception_index,
+            .needed = cpu_common_exception_index_needed,
+        } , {
+            /* empty */
+        }
     }
 };
 
@@ -1044,7 +1079,7 @@ static void *file_ram_alloc(RAMBlock *block,
     }
 
     /* Make name safe to use with mkstemp by replacing '/' with '_'. */
-    sanitized_name = g_strdup(block->mr->name);
+    sanitized_name = g_strdup(memory_region_name(block->mr));
     for (c = sanitized_name; *c != '\0'; c++) {
         if (*c == '/')
             *c = '_';
@@ -1242,7 +1277,7 @@ static ram_addr_t ram_block_add(RAMBlock *new_block)
             new_block->host = phys_mem_alloc(new_block->length);
             if (!new_block->host) {
                 fprintf(stderr, "Cannot set up guest memory '%s': %s\n",
-                        new_block->mr->name, strerror(errno));
+                        memory_region_name(new_block->mr), strerror(errno));
                 exit(1);
             }
             memory_try_enable_merging(new_block->host, new_block->length);

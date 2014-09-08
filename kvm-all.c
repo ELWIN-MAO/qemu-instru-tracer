@@ -493,6 +493,19 @@ int kvm_check_extension(KVMState *s, unsigned int extension)
     return ret;
 }
 
+int kvm_vm_check_extension(KVMState *s, unsigned int extension)
+{
+    int ret;
+
+    ret = kvm_vm_ioctl(s, KVM_CHECK_EXTENSION, extension);
+    if (ret < 0) {
+        /* VM wide version not implemented, use global one instead */
+        ret = kvm_check_extension(s, extension);
+    }
+
+    return ret;
+}
+
 static int kvm_set_ioeventfd_mmio(int fd, hwaddr addr, uint32_t val,
                                   bool assign, uint32_t size, bool datamatch)
 {
@@ -1669,16 +1682,30 @@ void kvm_cpu_synchronize_state(CPUState *cpu)
     }
 }
 
+static void do_kvm_cpu_synchronize_post_reset(void *arg)
+{
+    CPUState *cpu = arg;
+
+    kvm_arch_put_registers(cpu, KVM_PUT_RESET_STATE);
+    cpu->kvm_vcpu_dirty = false;
+}
+
 void kvm_cpu_synchronize_post_reset(CPUState *cpu)
 {
-    kvm_arch_put_registers(cpu, KVM_PUT_RESET_STATE);
+    run_on_cpu(cpu, do_kvm_cpu_synchronize_post_reset, cpu);
+}
+
+static void do_kvm_cpu_synchronize_post_init(void *arg)
+{
+    CPUState *cpu = arg;
+
+    kvm_arch_put_registers(cpu, KVM_PUT_FULL_STATE);
     cpu->kvm_vcpu_dirty = false;
 }
 
 void kvm_cpu_synchronize_post_init(CPUState *cpu)
 {
-    kvm_arch_put_registers(cpu, KVM_PUT_FULL_STATE);
-    cpu->kvm_vcpu_dirty = false;
+    run_on_cpu(cpu, do_kvm_cpu_synchronize_post_init, cpu);
 }
 
 int kvm_cpu_exec(CPUState *cpu)

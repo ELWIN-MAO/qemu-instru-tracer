@@ -94,6 +94,7 @@ do { printf("IOMMU: " fmt , ## __VA_ARGS__); } while (0)
 #define IOMMU_CTRL_TSB_SHIFT    16
 
 #define IOMMU_BASE              0x8
+#define IOMMU_FLUSH             0x10
 
 #define IOMMU_TTE_DATA_V        (1ULL << 63)
 #define IOMMU_TTE_DATA_SIZE     (1ULL << 61)
@@ -203,7 +204,8 @@ static AddressSpace *pbm_pci_dma_iommu(PCIBus *bus, void *opaque, int devfn)
     return &is->iommu_as;
 }
 
-static IOMMUTLBEntry pbm_translate_iommu(MemoryRegion *iommu, hwaddr addr)
+static IOMMUTLBEntry pbm_translate_iommu(MemoryRegion *iommu, hwaddr addr,
+                                         bool is_write)
 {
     IOMMUState *is = container_of(iommu, IOMMUState, iommu);
     hwaddr baseaddr, offset;
@@ -352,6 +354,9 @@ static void iommu_config_write(void *opaque, hwaddr addr,
         is->regs[IOMMU_BASE >> 3] &= 0xffffffff00000000ULL;
         is->regs[IOMMU_BASE >> 3] |= val & 0xffffffffULL;
         break;
+    case IOMMU_FLUSH:
+    case IOMMU_FLUSH + 0x4:
+        break;
     default:
         qemu_log_mask(LOG_UNIMP,
                   "apb iommu: Unimplemented register write "
@@ -387,6 +392,10 @@ static uint64_t iommu_config_read(void *opaque, hwaddr addr, unsigned size)
     case IOMMU_BASE + 0x4:
         val = is->regs[IOMMU_BASE >> 3] & 0xffffffffULL;
         break;
+    case IOMMU_FLUSH:
+    case IOMMU_FLUSH + 0x4:
+        val = 0;
+        break;
     default:
         qemu_log_mask(LOG_UNIMP,
                       "apb iommu: Unimplemented register read "
@@ -415,7 +424,7 @@ static void apb_config_writel (void *opaque, hwaddr addr,
         /* XXX: not implemented yet */
         break;
     case 0x200 ... 0x217: /* IOMMU */
-        iommu_config_write(is, (addr & 0xf), val, size);
+        iommu_config_write(is, (addr & 0x1f), val, size);
         break;
     case 0xc00 ... 0xc3f: /* PCI interrupt control */
         if (addr & 4) {
@@ -497,7 +506,7 @@ static uint64_t apb_config_readl (void *opaque,
         /* XXX: not implemented yet */
         break;
     case 0x200 ... 0x217: /* IOMMU */
-        val = iommu_config_read(is, (addr & 0xf), size);
+        val = iommu_config_read(is, (addr & 0x1f), size);
         break;
     case 0xc00 ... 0xc3f: /* PCI interrupt control */
         if (addr & 4) {
