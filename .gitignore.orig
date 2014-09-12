@@ -1,3 +1,28 @@
+<<<<<<< HEAD
+# Object files
+*.o
+*.ko
+*.obj
+*.elf
+
+# Libraries
+*.lib
+*.a
+
+# Shared objects (inc. Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Executables
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
+=======
 /config-devices.*
 /config-all-devices.*
 /config-all-disas.*
@@ -109,3 +134,4 @@ cscope.*
 tags
 TAGS
 *~
+>>>>>>> 0dfa7e30126364c434a48cb37a1a41119e536c2a
