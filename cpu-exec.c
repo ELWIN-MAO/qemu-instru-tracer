@@ -195,6 +195,8 @@ static inline tcg_target_ulong cpu_tb_exec(CPUState *cpu, uint8_t *tb_ptr)
     return next_tb;
 }
 
+#define MAXLINE 45000000
+
 /* Execute the code without caching the generated code. An interpreter
    could be used if available. */
 static void cpu_exec_nocache(CPUArchState *env, int max_cycles,
@@ -210,6 +212,19 @@ static void cpu_exec_nocache(CPUArchState *env, int max_cycles,
 
     tb = tb_gen_code(cpu, orig_tb->pc, orig_tb->cs_base, orig_tb->flags,
                      max_cycles);
+                     
+    if (qemu_loglevel_mask(CPU_LOG_EXEC)) {
+		qemu_log("T 0x"TARGET_FMT_lx" "TARGET_FMT_lx" "TARGET_FMT_lx"\n",tb->index,env->cr[3],env->regs[R_ESP]&0xffffe000);
+		linecount++;
+		if(linecount==MAXLINE){
+			linecount=0;
+			filecount++;
+			char buff[10];
+			sprintf(buff,"%d.log",filecount);
+			qemu_set_log_filename(buff);
+		}						
+    }
+                     
     cpu->current_tb = tb;
     /* execute the generated code */
     trace_exec_tb_nocache(tb, tb->pc);
@@ -737,7 +752,15 @@ int cpu_exec(CPUArchState *env)
                 if (qemu_loglevel_mask(CPU_LOG_EXEC)) {
                     //qemu_log("Trace %p [" TARGET_FMT_lx "] %s\n",
                              //tb->tc_ptr, tb->pc, lookup_symbol(tb->pc));
-                    qemu_log("T %p "TARGET_FMT_lx" "TARGET_FMT_lx"\n",tb->tc_ptr,env->cr[3],env->regs[R_ESP]&0xffffe000);
+                    qemu_log("T 0x"TARGET_FMT_lx" "TARGET_FMT_lx" "TARGET_FMT_lx"\n",tb->index,env->cr[3],env->regs[R_ESP]&0xffffe000);
+					linecount++;
+					if(linecount==MAXLINE){
+						linecount=0;
+						filecount++;
+						char buff[10];
+						sprintf(buff,"%d.log",filecount);
+						qemu_set_log_filename(buff);
+					}						
                 }
                 /* see if we can patch the calling TB. When the TB
                    spans two pages, we cannot safely do a direct
