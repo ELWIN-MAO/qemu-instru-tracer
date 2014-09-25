@@ -1,12 +1,18 @@
 #!/bin/bash
 
-#./log.sh &
-
-#/usr/local/qemu_normal/bin/qemu-system-i386  -hda  ./Ubuntu_10.04/Ubuntu.vmdk   -boot d -m 2048 -rtc clock=rt -k en-us -d exec,in_asm -D ./log.txt
-#/usr/local/qemu_normal/bin/qemu-system-i386  -hda  ./Ubuntu_10.04/Ubuntu.vmdk   -boot d -m 2048 -rtc clock=rt -k en-us
+#./v_top.sh &  #start log process in background  
 
 
-#/usr/local/bin/qemu-system-i386  -hda  ./Ubuntu_10.04/Ubuntu.vmdk   -boot d -m 2048 -rtc clock=rt -k en-us -d exec,in_asm -D ./log.txt
-/usr/local/bin/qemu-system-i386  -hda  ./Ubuntu_10.04/Ubuntu.vmdk   -boot d -m 2048 -rtc clock=rt -k en-us
+#/usr/local/qemu_normal/bin/qemu-system-i386   -hda  ./lubuntu12.04_2014.8.18/lubuntu12.04.raw  -boot c  -m 2048   -k en-us 
+#/usr/local/qemu_normal/bin/qemu-system-i386   -hda  ./lubuntu12.04_2014.8.18/lubuntu12.04.raw   -boot c  -m 2048  -k en-us  -rtc clock=vm -icount 7    -d exec,in_asm -D ./log-zml.txt
 
-#logprocess.sh
+
+#/usr/local/bin/qemu-system-i386   -hda  ./lubuntu12.04_2014.8.18/lubuntu12.04.raw  -boot c  -m 2048   -k en-us -rtc clock=host
+#/usr/local/bin/qemu-system-i386   -hda  ./lubuntu12.04_2014.8.18/lubuntu12.04.raw   -boot c  -m 2048  -k en-us  -rtc clock=vm -icount 7    -d exec,in_asm -D ./$(date "+%Y.%m.%d.%H.%M").log
+#/home/myming/qemu-instru-tracer-master/qemu-instru-tracer-master/i386-softmmu/qemu-system-i386   -hda  ./lubuntu12.04_2014.8.18/lubuntu12.04.raw   -boot c  -m 2048  -k en-us
+/home/myming/qemu-instru-tracer-master/qemu-instru-tracer-master/i386-softmmu/qemu-system-i386   -hda  ./lubuntu12.04_2014.8.18/lubuntu12.04.raw   -boot c  -m 2048  -k en-us  -rtc clock=vm -icount 7    -d exec,in_asm -D ./$(date "+%Y.%m.%d.%H.%M").log
+
+#/home/myming/qemu-instru-tracer-master/qemu-instru-tracer-master/i386-softmmu/qemu-system-i386   -hda  ./lubuntu12.04_2014.8.18/lubuntu12.04.raw   -boot c  -m 2048  -k en-us  -rtc clock=vm -icount 7    -d exec,in_asm -D  0.log 
+
+
+#touch end  # the log end flag

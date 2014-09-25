@@ -1,0 +1,136 @@
+                                                     指令频度统计使用和帮助文档
+                                                                    
+
+1.制作虚拟磁盘并安装系统
+  由于qemu从一个空的虚拟磁盘开始安装系统十分缓慢，没法接受，所以选择用vmware虚拟机安装操作系统，生成lubuntu.vmdk这样的虚拟磁盘。
+2.将*.vmdk上传到服务器
+  运行qemu-system-i386   -hda  ./lubuntu12.04_2014.8.18/lubuntu12.04.vmdk   -boot c  -m 2048   -k en-us  -d exec,in_asm -D ./log-zml.txt
+这样的命令即可以使用vmdk虚拟机。
+
+3. 转换vmdk到raw格式
+由于vmdk格式的虚拟磁盘不能直接在host中挂载读写，所以需要将vmdk转换为raw格式。
+qemu-img convert -f vmkd -O raw  lubuntu12.04.vmdk lubuntu12.04.raw
+
+4.使用raw格式的磁盘
+qemu-system-i386   -hda  ./lubuntu12.04_2014.8.18/lubuntu12.04.raw   -boot c  -m 2048   -k en-us  -d exec,in_asm -D ./log-zml.txt
+ 
+5.挂载读写raw格式的磁盘
+
+5.1
+fdisk  -l lubuntu12.04.raw
+
+Disk lubuntu12.04.raw: 85.9 GB, 85899345920 bytes
+255 heads, 63 sectors/track, 10443 cylinders, total 167772160 sectors
+Units = 扇区 of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+Disk identifier: 0x00004456
+
+           设备 启动      起点          终点     块数   Id  系统
+lubuntu12.04.raw1   *        2048   136718335    68358144   83  Linux
+lubuntu12.04.raw2       136720382   152342527     7811073    5  扩展
+lubuntu12.04.raw5       136720384   152342527     7811072   82  Linux 交换 / Solaris
+
+算出第1个主分区的offset=2048*512=1048576
+算出第2个扩展分区的offset=136720382*512             扩展分区没法挂载
+扩展分区里面的第一个逻辑分区的offset=136720384*512  第一个逻辑分区是swap分区，也没有挂载意义。
+其他分区的offset计算方法类似。
+
+
+5.2
+挂载第一个主分区。
+mount -o loop,offset=1048576   lubuntu12.04.raw ../rawmount
+cd rawmount下面即可以对第一个主分区中的内容进行读写操作。
+操作完毕后离开挂载点并umount rawmount
+
+
+
+6.lubuntu图形界面下自动登录特定账户
+
+6.1
+/etc/lxdm/default.conf   
+autologin=root #要登录的用户名 
+
+
+6.2
+/etc/lightdm/lightdm.conf  
+[SeatDefaults]  
+autologin-user=root #要登录的用户名 
+autologin-user-timeout=0  
+greeter-session=lightdm-gtk-greeter  
+user-session=Lubuntu  
+
+
+7.lubuntu图形界面下，系统登录后自动执行程序
+
+mkdir -p ~/.config/lxsession/Lubuntu/           
+
+touch ~/.config/lxsession/Lubuntu/autostart 
+
+编辑autostart
+@/root/new/aaa.sh
+@leafpad
+@chromium-browser
+
+
+其中@后面是要自动执行的脚本或者命令
+
+
+/root/new/aaa.sh
+内容如下：
+#!/bin/bash
+echo "start" > /root/new/bbb.txt                         
+date >> /root/new/bbb.txt   
+cnee --replay -f /root/Documents/test-cnee.xns -fcr -ns  #执行xnee
+sleep 10
+/usr/local/runScript -r /root/Documents/test.sikuli/     #执行skuli              
+cd /root/new
+leafpad ccc.txt &
+sleep 120
+WID=`xdotool search "leafpad" | head -1 `            #搜索到leafpad
+xdotool windowactivate --sync $WID                   #激活leafpad使其变为当前窗口
+xdotool type "www.baidu.com, atuo test~~"            #键入内容
+xdotool key ctrl+s                                   #按ctrl+s保存文件
+xdotool key ctrl+s
+xdotool type "finish"                                #再键入内容
+date >> /root/new/bbb.txt             
+echo "stop" >> /root/new/bbb.txt
+shutdown -h now                                      #自动关机    
+
+
+
+
+
+7.xdotool使用帮助
+下载地址
+http://www.semicomplete.com/projects/xdotool/
+安装方法
+解压后make &&  make install
+
+官方的帮助文档：
+http://www.semicomplete.com/projects/xdotool/xdotool.xhtml
+
+
+使用举例：
+
+1. Example: focus the firefox url bar
+
+WID=`xdotool search "Mozilla Firefox" | head -1`  #搜索到已经开启的firefox 
+xdotool windowactivate --sync $WID                #激活为当前窗口
+xdotool key --clearmodifiers ctrl+l               #使用快捷键ctrl+l将光标移动到地址栏
+
+
+# As of version 2.20100623, you can do this simpler version of above:
+xdotool search "Mozilla Firefox" windowactivate --sync key --clearmodifiers ctrl+l
+
+2.
+Example: Resize all visible gnome-terminal windows
+
+WIDS=`xdotool search --onlyvisible --name "gnome-terminal"`  #搜索所有打开的terminal
+for id in $WIDS; do                                             
+  xdotool windowsize $id 500 500                             #在for循环中将每个terminal的大小调节为500*500大小                     
+done
+
+# As of version 2.20100623, you can do this simpler version of above:
+xdotool search --onlyvisible --classname "gnome-terminal" windowsize %@ 500
+500
