@@ -3,6 +3,7 @@
 log_path="../log_qie_kuai"
 log_done="../log_processed"
 
+./v_clean.sh
 
 while true :
 do

@@ -31,10 +31,7 @@ do
 done
 
 
-cat `ls -v *.hash.thd` | sort  -k 1 -k 2  > all_thread.thst 
-
-./proc_all.py < all_thread.thst   > v_all.txt
-
-sort -nr -k 2 v_all.txt  > v_all_sort.txt
-
-echo "bottom finish!"
+for m_file in `ls -v  *.hash.thd`
+do
+./proc_all.py  < $m_file  > v_all.txt
+done
