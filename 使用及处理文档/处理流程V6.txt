@@ -3,8 +3,15 @@
 可以很好的控制块数，已经各个块的大小一致。
 
 
+cd
+all_work_flow\prog
+./start_all.sh 自动处理所有流程
 
-v_clean.sh 清理中间结果，以及最后结果。
+./v_kill.sh 关掉所有的程序
+
+
+
+v_clean.sh 清理中间结果，以及最后结果，只保留程序代码。
 
 
 流水处理  v_top.sh
@@ -91,14 +98,22 @@ done
 
 输入xxx.hash  输出 xxx.hash.thd
 
+
+对hash块进行排序
+cat `ls -v *.hash.thd` | sort  -k 1 -k 2  > all_thread.thst
+
+输入 xxx.hash.thd  输出  all_thread.thst
+
+
+
 7.
 对总的线程信息汇总得到所有的指令频度
-for m_file in `ls -v  *.hash.thd`
-do
-./proc_all.py  < $m_file  > v_all.txt
-done
-
+./proc_all.py < all_thread.thst   > v_all.txt
 输入 xxx.hash.thd  输出  v_all.txt
+
+
+对指令频度进行排序
+sort -n -k2 v_all.txt  > v_all_sort.txt
 
 
 缺少生成html文档过程

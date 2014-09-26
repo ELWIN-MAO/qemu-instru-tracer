@@ -14,6 +14,5 @@ while True:
         all_ins_count[i-2]+=int(words[i])
 
 
-for nu in all_ins_count:
-    print str(nu)+' ',
-print ''
+for i in range(0,len(all_ins_count)):
+    print all_inst[i]+' '+str(all_ins_count[i])
