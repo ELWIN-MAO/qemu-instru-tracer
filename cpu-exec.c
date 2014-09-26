@@ -196,7 +196,7 @@ static inline tcg_target_ulong cpu_tb_exec(CPUState *cpu, uint8_t *tb_ptr)
 }
 
 #define MAXLINE 45000000
-
+static uint32_t linecount=0,filecount=0;
 /* Execute the code without caching the generated code. An interpreter
    could be used if available. */
 static void cpu_exec_nocache(CPUArchState *env, int max_cycles,
