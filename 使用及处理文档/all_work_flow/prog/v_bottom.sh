@@ -37,4 +37,7 @@ cat `ls -v *.hash.thd` | sort  -k 1 -k 2  > all_thread.thst
 
 sort -nr -k 2 v_all.txt  > v_all_sort.txt
 
+
+./gen_all_table.py  < v_all_sort.txt  > v_all_sort.html
+./gen_thread_table.py  < all_thread.thst  > all_thread.thst.html
 echo "bottom finish!"
