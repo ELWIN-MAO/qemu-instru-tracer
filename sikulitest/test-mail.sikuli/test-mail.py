@@ -1,0 +1,47 @@
+#!/usr/bin/python
+Settings.ActionLogs=1
+Settings.InfoLogs=1
+Settings.DebugLogs=1
+
+import shutil
+import os
+
+f=open("/root/Documents/test-mail.sikuli/result",'w')
+fp=os.popen("date")
+dt=fp.read()
+f.write(dt)
+f.write("start opening!\n")
+myapp=App.open("/usr/local/thunderbird/thunderbird")
+wait("1410856914461.png",FOREVER)
+fp=os.popen("date")
+dt=fp.read()
+f.write(dt)
+f.write("open finished!\n")
+img=capture(SCREEN)
+fp=os.popen("date")
+dt=fp.read()
+shutil.move(img,r"/root/Documents/test-mail.sikuli/open"+dt+".png")
+click("1410856914461.png")
+wait("1410857079029.png",FOREVER)
+fp=os.popen("date")
+dt=fp.read()
+f.write(dt)
+f.write("start writing!\n")
+type("sikulitest2@163.com"+Key.TAB)
+type("test"+Key.TAB)
+type("Hello world")
+img=capture(SCREEN)
+fp=os.popen("date")
+dt=fp.read()
+shutil.move(img,r"/root/Documents/test-mail.sikuli/write"+dt+".png")
+click("1411521365131.png")
+wait("1411529419329.png",FOREVER)
+fp=os.popen("date")
+dt=fp.read()
+f.write(dt)
+f.write("send finished!\n")
+type(Key.F4,KeyModifier.ALT)
+fp=os.popen("date")
+dt=fp.read()
+f.write(dt)
+f.write("close finished!\n")

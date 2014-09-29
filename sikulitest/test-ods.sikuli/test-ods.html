@@ -1,0 +1,112 @@
+
+<html>
+   <head>
+      <style type="text/css">
+         .sikuli-code {
+            font-size: 20px;
+            font-family: "Osaka-mono", Monospace;
+            line-height: 1.5em;
+            display:table-cell;
+            white-space: pre-wrap;       /* css-3 */
+            white-space: -moz-pre-wrap !important;  /* Mozilla, since 1999 */
+            white-space: -pre-wrap;      /* Opera 4-6 */
+            white-space: -o-pre-wrap;    /* Opera 7 */
+            word-wrap: break-word;       /* Internet Explorer 5.5+ */
+            width: 99%;   /* remove horizontal scroll-bar when viewing in IE7 */
+         }
+         .sikuli-code img {
+            vertical-align: middle;
+            margin: 2px;
+            border: 1px solid #ccc;
+            padding: 2px;
+            -moz-border-radius: 5px;
+            -webkit-border-radius: 5px;
+            -moz-box-shadow: 1px 1px 1px gray;
+            -webkit-box-shadow: 1px 1px 2px gray;
+         }
+         .kw {
+            color: blue;
+         }
+         .skw {
+            color: rgb(63, 127, 127);
+         }
+
+         .str {
+            color: rgb(128, 0, 0);
+         }
+
+         .dig {
+            color: rgb(128, 64, 0);
+         }
+
+         .cmt {
+            color: rgb(200, 0, 200);
+         }
+
+         h2 {
+            display: inline;
+            font-weight: normal;
+         }
+
+         .info {
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+            margin-bottom: 20px;
+            display: none;
+         }
+
+         a {
+            color: #9D2900;
+         }
+
+         body {
+            font-family: "Trebuchet MS", Arial, Sans-Serif;
+         }
+
+      </style>
+   </head>
+<body>
+<div class="info">
+<h2>test-ods.sikuli</h2> <a href="test-ods.zip">(Download this script)</a>
+</div>
+<pre class="sikuli-code">
+<span class="cmt">#!/usr/bin/python
+</span>Settings.ActionLogs=<span class="dig">1</span>
+Settings.InfoLogs=<span class="dig">1</span>
+Settings.Debugs=<span class="dig">1</span>
+
+<span class="kw">import</span> os
+
+f=open(<span class="str">"/root/Documents/test-ods.sikuli/result"</span>,<span class="str">'w'</span>)
+fp=os.popen(<span class="str">"date"</span>)
+dt=fp.read()
+f.write(dt)
+f.write(<span class="str">"start opening!\n"</span>)
+myapp=App.open(<span class="str">"/usr/bin/openoffice4 /root/Desktop/test.ods"</span>)
+<span class="skw">wait</span>(<img src="1411546527302.png" />,FOREVER)
+fp=os.popen(<span class="str">"date"</span>)
+dt=fp.read()
+f.write(dt)
+f.write(<span class="str">"open finished!\n"</span>)
+fp=os.popen(<span class="str">"date"</span>)
+dt=fp.read()
+<span class="skw">type</span>(dt)
+fp=os.popen(<span class="str">"date"</span>)
+dt=fp.read()
+f.write(dt)
+f.write(<span class="str">"write finished!\n"</span>)
+<span class="skw">type</span>(<span class="str">'s'</span>,KeyModifier.CTRL)
+fp=os.popen(<span class="str">"date"</span>)
+dt=fp.read()
+f.write(dt)
+f.write(<span class="str">"save finished!\n"</span>)
+<span class="skw">wait</span>(<span class="dig">5</span>)
+<span class="skw">click</span>(<img src="1411546627869.png" />)
+fp=os.popen(<span class="str">"date"</span>)
+dt=fp.read()
+f.write(dt)
+f.write(<span class="str">"close finished!\n"</span>)
+<span class="cmt">#type(Key.F4,KeyModifier.ALT)</span>
+</pre>
+</body>
+</html>
