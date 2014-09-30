@@ -10,7 +10,7 @@ while True:
     words=line.split()
     bid=int(words[1],16) #get
     bid=bid/120000
-    strbid=('%x.b' %(bid) )
+    strbid=('%08x.hshb' %(bid) )
     if dict.has_key(strbid):
         pass
     else:

@@ -12,8 +12,8 @@ m_queue=""
 words=sys.argv[1].split('/')
 
 
-fa=open('a'+words[-1],'w')
-fb=open('b'+words[-1],'w')
+fa=open(words[-1]+'.a','w')
+fb=open(words[-1]+'.b','w')
 
 
 

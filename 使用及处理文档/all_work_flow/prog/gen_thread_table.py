@@ -15,15 +15,15 @@ head ="""<html>
 <table border="1">
 
 <tr>
-    <td>pid</td>
-    <td>tid</td>"""
+    <th>pid</th>
+    <th>tid</th>"""
 
 
 print head
 
 
 for opcode in all_inst:
-    print "<td>"+opcode+"</td>"
+    print "<th>"+opcode+"</th>"
 
 print "</tr>"
 

@@ -1,7 +1,10 @@
 #!/bin/bash
 
+echo "$(date "+%Y.%m.%d.%H.%M") top start"
+
 log_path="../log_qie_kuai"
-log_done="../log_processed"
+#log_done="../log_processed"
+log_done="/mnt/freenas/log_processed"
 
 
 while true :
@@ -34,10 +37,10 @@ do
 echo $m_file
 
 ./create_ab.py $log_path/$m_file                      
-./stata.py < "a${m_file}" > "a${m_file}.stat"    
-./statb.py < "b${m_file}" > "b${m_file}.stat" 
-./hash_a.py   < "a${m_file}.stat" 
-./hash_b.py   < "b${m_file}.stat"
+./stata.py < "${m_file}.a" > "${m_file}.a.stat"    
+./statb.py < "${m_file}.b" > "${m_file}.b.stat" 
+./hash_a.py   < "${m_file}.a.stat" 
+./hash_b.py   < "${m_file}.b.stat"
 
 mv   $log_path/$m_file $log_done/ 
 done
@@ -48,8 +51,8 @@ fi
 
 done
 
+sort ./error_opcode.txt  | uniq > error_opcode_uniq.txt
 
-
-echo "bottom start!"
+echo "$(date "+%Y.%m.%d.%H.%M") top finish"
 
 ./v_bottom.sh

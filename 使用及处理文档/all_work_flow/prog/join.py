@@ -5,7 +5,9 @@ fa=open(sys.argv[1],'r')
 fb=open(sys.argv[2],'r')
 fbe=open('fb_error.txt','a')
 fae=open('fa_error.txt','a')
-tt=sys.argv[1][0:-1]+'join'
+words=sys.argv[1].split('.')
+tt=words[0]+".join"
+
 f_join=open(tt,'w')
 
 dict={}

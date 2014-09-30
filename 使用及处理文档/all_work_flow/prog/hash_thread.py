@@ -10,7 +10,7 @@ while True:
     words=line.split()
     pid=int(words[0],16) #get pid
     pid=pid&0xfff40000
-    strpid=('%x.hash' %(pid) )
+    strpid=('%08x.hshth' %(pid) )
     if dict.has_key(strpid):
         pass
     else:

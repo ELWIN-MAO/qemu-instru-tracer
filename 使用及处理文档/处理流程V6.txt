@@ -22,16 +22,26 @@ for m_file in  ${file_array[@]}
 do
 echo $m_file
 
-./create_ab.py $log_path/$m_file
-./stata.py < "a${m_file}" > "a${m_file}.stat"
-./statb.py < "b${m_file}" > "b${m_file}.stat"
-./hash_a.py   < "a${m_file}.stat"
-./hash_b.py   < "b${m_file}.stat"
+./create_ab.py $log_path/$m_file                      
+./stata.py < "${m_file}.a" > "${m_file}.a.stat"    
+./statb.py < "${m_file}.b" > "b${m_file}.b.stat" 
+./hash_a.py   < "${m_file}.a.stat" 
+./hash_b.py   < "${m_file}.b.stat"
 
-mv   $log_path/$m_file $log_done/
+mv   $log_path/$m_file $log_done/ 
 done
 
-输入 0.log 1.log   输出a0.log b0.log a0.log.stat b0.log.stat
+sort ./error_opcode.txt  | uniq > error_opcode_uniq.txt
+
+#输入 0.log 1.log   输出a0.log b0.log a0.log.stat b0.log.stat
+
+输入 0.log 1.log   输出0.log.a 0.log.b 0.log.a.stat 0.log.b.stat
+xxx.hsha
+xxx.hshb
+error_opcode.txt
+error_opcode_uniq.txt 
+
+
 
 
 汇总 v_bottom.sh
@@ -39,33 +49,32 @@ done
 3.
 对b的hash块进行汇总这样就是总的bid,pid,tid的汇总
 
-for m_file in `ls -v   *.b`
+for m_file in `ls -v   *.hshb`
 do
 ./stat_hash_b.py  <  ${m_file} > ${m_file}.stat
 done
 
-输入xxxx.b 输出xxx.b.stat
-
-
-这样也没法剔除出在b[i].stat中有定义，但是在a中没有定义的块。
-因为block_id是跳跃的。
+输入xxxx.hshb 输出xxx.hshb.stat
 
 
 4.
-对xxx.a,  xxx.b.stat哈希块进行连接
+对xxx.hsha,  xxx.hshb.stat哈希块进行连接
 形成xxx.join
-连接的过程中会输出
-(b中使用了但是在a中找不到的块的id）,如果没有bug是不会出现这种情况的。错误文件fbe.txt追加写入
-a中重复定义的块  faerror.txt 也就是说没有对A进行清洗
 
-for m_file in `ls -v  *.a`
+
+for m_file in `ls -v  *.hsha`
 do
 m=${m_file%.*}
-./join.py   ${m_file}    ${m}.b.stat
+./join.py   ${m_file}    ${m}.hshb.stat
 done
 
-输入　xxx.a   xxx.b.stat 输出 xxx.join
+sort fa_error.txt |uniq > fa_error_uniq.txt
+sort fb_error.txt |uniq > fb_eeror_uniq.txt
 
+输入　xxx.hsha   xxx.hshb.stat 输出 xxx.join   fa_error.txt  fb_error.txt   fa_error_uniq.txt  fb_error_uniq.txt
+###在将xxx.hasha读入内存时会输出a中重复定义的块  fa_error.txt 也就是说没有对A进行清洗
+##连接的过程中会输出b中使用了但是在a中找不到的块的id, fb_error.txt  如果没有bug是不会出现这种情况的
+ 
 5.
 对每个连接好的hash块进行按线程进行统计
 for m_file in `ls -v  *.join`
@@ -85,38 +94,46 @@ do
 done
 
 
-输入xxx.join.subth  输出 xxx.hash
+输入xxx.join.subth  输出 xxx.hshth
 
 
 6.1
 分块进行汇总
-for m_file in `ls -v  *.hash`
+for m_file in `ls -v  *.hshth`
 do
 ./thread_stat.py  < $m_file  > $m_file.thd
 done
 得到的就是总的线程的统计信息
 
-输入xxx.hash  输出 xxx.hash.thd
+输入xxx.hshth  输出 xxx.hshth.thd
 
 
 对hash块进行排序
-cat `ls -v *.hash.thd` | sort  -k 1 -k 2  > all_thread.thst
+cat `ls -v *.hshth.thd` | sort  -k 1 -k 2  > v_all_thread.thst 
 
-输入 xxx.hash.thd  输出  all_thread.thst
+输入 xxx.hash.thd  输出  v_all_thread.thst
 
 
 
 7.
 对总的线程信息汇总得到所有的指令频度
-./proc_all.py < all_thread.thst   > v_all.txt
+./proc_all.py < v_all_thread.thst   > v_all.txt
 输入 xxx.hash.thd  输出  v_all.txt
 
 
 对指令频度进行排序
-sort -n -k2 v_all.txt  > v_all_sort.txt
+sort -nr -k 2 v_all.txt  > v_all_sort.txt
 
 
-缺少生成html文档过程
+9.
+生成总的线程指令频度统计html
+./gen_thread_table.py  < v_all_thread.thst  > v_all_thread.thst.html
+
+8.
+生成总的指令频度html
+./gen_all_table.py  < v_all_sort.txt  > v_all_sort.html
+
+
 =================================================
 
 

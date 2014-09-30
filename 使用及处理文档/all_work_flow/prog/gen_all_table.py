@@ -12,8 +12,8 @@ head ="""<html>
 <h4>all insturction statistics:</h4>
 <table border="1">
 <tr>
-  <td>instruction</td>
-  <td>i_count</td>
+  <th>instruction</th>
+  <th>i_count</th>
 </tr>"""
 
 
@@ -26,7 +26,7 @@ while True:
     if not line : break
     words=line.split()
     print "<tr>"
-    print "<td>"+words[0]+"</td>"
+    print "<th>"+words[0]+"</th>"
     print "<td>"+words[1]+"</td>"
     print "</tr>"
 
