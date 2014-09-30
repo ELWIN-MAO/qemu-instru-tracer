@@ -1038,7 +1038,7 @@ TranslationBlock *tb_gen_code(CPUState *cpu,
     target_ulong virt_page2;
     int code_gen_size;
     
-    static uint32_t blockcount;
+    static volatile uint32_t blockcount=0;
 
     phys_pc = get_page_addr_code(env, pc);
     tb = tb_alloc(pc);
@@ -1055,7 +1055,8 @@ TranslationBlock *tb_gen_code(CPUState *cpu,
     tb->flags = flags;
     tb->cflags = cflags;
     
-    tb->index = blockcount++;
+    tb->index = blockcount;
+    blockcount++;
     
     cpu_gen_code(env, tb, &code_gen_size);
     tcg_ctx.code_gen_ptr = (void *)(((uintptr_t)tcg_ctx.code_gen_ptr +

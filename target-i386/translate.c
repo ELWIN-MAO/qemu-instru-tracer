@@ -8060,6 +8060,7 @@ static inline void gen_intermediate_code_internal(X86CPU *cpu,
 #endif
             disas_flags = !dc->code32;
         log_target_disas(env, pc_start, pc_ptr - pc_start, disas_flags);
+        qemu_log("T "TARGET_FMT_lx,tb->index);
         qemu_log("\n");
     }
 #endif
