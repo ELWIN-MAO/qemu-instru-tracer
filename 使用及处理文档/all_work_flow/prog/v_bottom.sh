@@ -49,7 +49,7 @@ echo "$(date "+%Y.%m.%d.%H.%M") proc_all  v_all_thread.thst v_all.txt"
 ./proc_all.py < v_all_thread.thst   > v_all.txt
 
 
-sort -nr -k 2 v_all.txt  > v_all_sort.txt
+sort -k 2nr -k 1 v_all.txt  > v_all_sort.txt
 
 echo "$(date "+%Y.%m.%d.%H.%M") gen_thread_table"
 ./gen_thread_table.py  < v_all_thread.thst  > v_all_thread.thst.html

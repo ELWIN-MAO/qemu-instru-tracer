@@ -2,7 +2,7 @@
 
 ./v_clean.sh
 
-rm ../logfifo
+rm -rf ../logfifo
 mkfifo ../logfifo
 
 ./split2.py  < ../logfifo  & 
@@ -22,10 +22,10 @@ mkfifo ../logfifo
 #/home/myming/qemu-instru-tracer-master/qemu-instru-tracer-master/i386-softmmu/qemu-system-i386   -hda  ./lubuntu12.04_2014.8.18/lubuntu12.04.raw   -boot c  -m 2048  -k en-us  -rtc clock=vm -icount 7    -d exec,in_asm -D ./$(date "+%Y.%m.%d.%H.%M").log
 
 #/home/myming/nnn/qemu-instru-tracer/i386-softmmu/qemu-system-i386   -hda  ../lubuntu12.04_2014.8.18/lubuntu12.04.raw   -boot c  -m 2048  -k en-us  -rtc clock=vm -icount 7    -d exec,in_asm -D ../logfifo 
-/home/myming/nnn/qemu-instru-tracer/i386-softmmu/qemu-system-i386   -hda  ../lubuntu12.04_2014.8.18/lubuntu12.04.raw   -boot c  -m 2048  -rtc clock=vm -icount shift=7,align=off    -d exec,in_asm -D ../logfifo 
+/usr/local/bin/qemu-system-i386   -hda  ../lubuntu12.04_2014.8.18/lubuntu12.04.raw   -boot c  -m 2048  -rtc clock=vm -icount shift=7,align=off    -d exec,in_asm -D ../logfifo 
 #/home/myming/qemu-instru-tracer-master/qemu-instru-tracer-master/i386-softmmu/qemu-system-i386   -hda  ../lubuntu12.04_2014.8.18/lubuntu12.04.raw   -boot c  -m 2048  -k en-us  -rtc clock=vm -icount 7    -d exec,in_asm -D ../logfifo 
 
-###cat ../xxxx.ww  >  ../logfifo
+##cat ../xxxx.ww  >  ../logfifo
 
 
 touch ../log_qie_kuai/end  # the log end flag

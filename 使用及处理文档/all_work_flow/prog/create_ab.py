@@ -24,13 +24,13 @@ while True:
     	m_queue+=line   #add line to queue
     if line.startswith("T"):  #start with Trace
         if len(m_queue)>0:      #is a new block 
-            fa.write(m_queue)        #print this block to a 
-            fa.write(line)           #print this block to a
-            fb.write(line)           #record in b
-            m_queue=""              #clear queue  
-        else:                       #is a old block   
-            fb.write(line)
-            m_queue=""
-
+            pass
+        else:                       #is a blank block   
+            print "error "+line
+        fa.write(m_queue)        #print this block to a 
+        fa.write(line)           #print this block to a
+        m_queue=""              #clear queue  
+    if line.startswith("E"):
+        fb.write(line)
 fa.close() 
 fb.close() 
