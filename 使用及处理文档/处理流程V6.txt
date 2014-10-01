@@ -3,6 +3,8 @@
 可以很好的控制块数，已经各个块的大小一致。
 
 
+
+使用root账号登陆
 cd
 all_work_flow\prog
 ./start_all.sh 自动处理所有流程
@@ -132,9 +134,6 @@ sort -nr -k 2 v_all.txt  > v_all_sort.txt
 8.
 生成总的指令频度html
 ./gen_all_table.py  < v_all_sort.txt  > v_all_sort.html
-
-
-=================================================
 
 
 

@@ -69,8 +69,7 @@ touch ~/.config/lxsession/Lubuntu/autostart
 
 编辑autostart
 @/root/new/aaa.sh
-@leafpad
-@chromium-browser
+
 
 
 其中@后面是要自动执行的脚本或者命令
@@ -81,56 +80,7 @@ touch ~/.config/lxsession/Lubuntu/autostart
 #!/bin/bash
 echo "start" > /root/new/bbb.txt                         
 date >> /root/new/bbb.txt   
-cnee --replay -f /root/Documents/test-cnee.xns -fcr -ns  #执行xnee
 sleep 10
-/usr/local/runScript -r /root/Documents/test.sikuli/     #执行skuli              
-cd /root/new
-leafpad ccc.txt &
-sleep 120
-WID=`xdotool search "leafpad" | head -1 `            #搜索到leafpad
-xdotool windowactivate --sync $WID                   #激活leafpad使其变为当前窗口
-xdotool type "www.baidu.com, atuo test~~"            #键入内容
-xdotool key ctrl+s                                   #按ctrl+s保存文件
-xdotool key ctrl+s
-xdotool type "finish"                                #再键入内容
-date >> /root/new/bbb.txt             
+/usr/local/runScript -r /root/Documents/test.sikuli/     #执行skuli                         
 echo "stop" >> /root/new/bbb.txt
 shutdown -h now                                      #自动关机    
-
-
-
-
-
-7.xdotool使用帮助
-下载地址
-http://www.semicomplete.com/projects/xdotool/
-安装方法
-解压后make &&  make install
-
-官方的帮助文档：
-http://www.semicomplete.com/projects/xdotool/xdotool.xhtml
-
-
-使用举例：
-
-1. Example: focus the firefox url bar
-
-WID=`xdotool search "Mozilla Firefox" | head -1`  #搜索到已经开启的firefox 
-xdotool windowactivate --sync $WID                #激活为当前窗口
-xdotool key --clearmodifiers ctrl+l               #使用快捷键ctrl+l将光标移动到地址栏
-
-
-# As of version 2.20100623, you can do this simpler version of above:
-xdotool search "Mozilla Firefox" windowactivate --sync key --clearmodifiers ctrl+l
-
-2.
-Example: Resize all visible gnome-terminal windows
-
-WIDS=`xdotool search --onlyvisible --name "gnome-terminal"`  #搜索所有打开的terminal
-for id in $WIDS; do                                             
-  xdotool windowsize $id 500 500                             #在for循环中将每个terminal的大小调节为500*500大小                     
-done
-
-# As of version 2.20100623, you can do this simpler version of above:
-xdotool search --onlyvisible --classname "gnome-terminal" windowsize %@ 500
-500
