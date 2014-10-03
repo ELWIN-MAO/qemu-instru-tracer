@@ -17,7 +17,7 @@ while True:
     if not line : break
     words=line.split() 
     block_id=words[0] #get block_id
-    for i in range(1,len(words),2) :
+    for i in range(1,len(words),2) :  #is very important for process empty block define
         ins_count[words[i]]=int(words[i+1])
     if dict.has_key(block_id):
         fae.write(block_id+'\n') 

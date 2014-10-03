@@ -12,7 +12,7 @@ while True:
     pid   =words[0].strip() #get pid
     tid   =words[1].strip() #get tid
     pid_tid = pid+' '+tid
-    for i in range(2,len(words),2) :
+    for i in range(2,len(words),2) : #very important for empty block defined
         ins_count[words[i]]=int(words[i+1])
     if dict.has_key(pid_tid):
         xxx=dict[pid_tid]

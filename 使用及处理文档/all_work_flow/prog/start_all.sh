@@ -10,7 +10,7 @@ mkfifo ../logfifo
 
 ./v_top.sh | tee v_top_log.txt  &  #start log process in background  
 
-
+echo "qemu start" | tee -a qemu_log.txt
 
 #/usr/local/qemu_normal/bin/qemu-system-i386   -hda  ./lubuntu12.04_2014.8.18/lubuntu12.04.raw  -boot c  -m 2048   -k en-us 
 #/usr/local/qemu_normal/bin/qemu-system-i386   -hda  ./lubuntu12.04_2014.8.18/lubuntu12.04.raw   -boot c  -m 2048  -k en-us  -rtc clock=vm -icount 7    -d exec,in_asm -D ./log-zml.txt
@@ -29,5 +29,6 @@ mkfifo ../logfifo
 
 
 touch ../log_qie_kuai/end  # the log end flag
+echo "qemu stop" | tee -a qemu_log.txt
 
 wait 

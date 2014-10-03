@@ -11,11 +11,13 @@ while True:
     else:
     	dict[line]=1
 
-#for key in dict.keys():
-#    print "%s = %d" %(key.strip(),dict[key])
+for key in dict.keys():
+    print "%s = %d" %(key,dict[key])  #"=" is good for stat_hash_b.py
 
-ls=sorted(dict.iteritems(),key=lambda dict:dict[0],reverse=False)
 
-for item in ls:
-    print "%s = %d" %(item[0],item[1]) 
+###no need to sort dict  by (block_id pid tid)
+#ls=sorted(dict.iteritems(),key=lambda dict:dict[0],reverse=False)
+
+#for item in ls:
+#    print "%s = %d" %(item[0],item[1]) 
 

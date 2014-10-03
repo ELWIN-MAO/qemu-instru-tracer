@@ -16,7 +16,7 @@ def tongji(m_queue2) :
         opcode=words2[index]
         while (opcode=="rep" or opcode=="repnz" or opcode=="repz" or opcode=="addr32" or opcode =="lock"):
             index+=1 
-            opcode=words2[index].strip()
+            opcode=words2[index]
         if opcode=="fnsetpm(287":
             opcode="fnsetpm"
         if dict.has_key(opcode):

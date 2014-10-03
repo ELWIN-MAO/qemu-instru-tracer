@@ -24,7 +24,7 @@ for m_file in  ${file_array[@]}
 do
 echo $m_file
 
-./create_ab.py $log_path/$m_file                      
+./create_ab.py $log_path/$m_file      #这个过程中能够发现空的块，记录到错误文件empty_block.txt中。不录入*.log.a            
 ./stata.py < "${m_file}.a" > "${m_file}.a.stat"    
 ./statb.py < "${m_file}.b" > "b${m_file}.b.stat" 
 ./hash_a.py   < "${m_file}.a.stat" 
@@ -33,15 +33,11 @@ echo $m_file
 mv   $log_path/$m_file $log_done/ 
 done
 
-sort ./error_opcode.txt  | uniq > error_opcode_uniq.txt
-
-#输入 0.log 1.log   输出a0.log b0.log a0.log.stat b0.log.stat
 
 输入 0.log 1.log   输出0.log.a 0.log.b 0.log.a.stat 0.log.b.stat
 xxx.hsha
 xxx.hshb
-error_opcode.txt
-error_opcode_uniq.txt 
+empty_block.txt
 
 
 
@@ -76,6 +72,7 @@ sort fb_error.txt |uniq > fb_eeror_uniq.txt
 输入　xxx.hsha   xxx.hshb.stat 输出 xxx.join   fa_error.txt  fb_error.txt   fa_error_uniq.txt  fb_error_uniq.txt
 ###在将xxx.hasha读入内存时会输出a中重复定义的块  fa_error.txt 也就是说没有对A进行清洗
 ##连接的过程中会输出b中使用了但是在a中找不到的块的id, fb_error.txt  如果没有bug是不会出现这种情况的
+
  
 5.
 对每个连接好的hash块进行按线程进行统计
