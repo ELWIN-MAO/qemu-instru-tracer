@@ -1,0 +1,4 @@
+#!/bin/bash
+rm -rf /root/new/bbb.txt
+echo "start" > /root/new/bbb.txt
+date >> /root/new/bbb.txt

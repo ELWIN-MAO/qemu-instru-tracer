@@ -67,3 +67,5 @@ done
 echo "$(date "+%Y.%m.%d.%H.%M") top finish"
 
 ./v_bottom.sh
+
+./get_result.sh
