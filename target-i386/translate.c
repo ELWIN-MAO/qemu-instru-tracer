@@ -8051,8 +8051,13 @@ static inline void gen_intermediate_code_internal(X86CPU *cpu,
 #ifdef DEBUG_DISAS
     if (qemu_loglevel_mask(CPU_LOG_TB_IN_ASM)) {
         int disas_flags;
-        qemu_log("----------------\n");
-        qemu_log("IN: %s\n", lookup_symbol(pc_start));
+        
+        static volatile uint32_t blockcount=0;
+        //qemu_log("----------------\n");
+        //qemu_log("IN: %s\n", lookup_symbol(pc_start));
+        tb->index = blockcount;
+		blockcount++;
+        qemu_log("T "TARGET_FMT_lx"\n",tb->index);
 #ifdef TARGET_X86_64
         if (dc->code64)
             disas_flags = 2;
@@ -8060,7 +8065,6 @@ static inline void gen_intermediate_code_internal(X86CPU *cpu,
 #endif
             disas_flags = !dc->code32;
         log_target_disas(env, pc_start, pc_ptr - pc_start, disas_flags);
-        qemu_log("T "TARGET_FMT_lx,tb->index);
         qemu_log("\n");
     }
 #endif
