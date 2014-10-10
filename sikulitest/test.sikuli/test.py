@@ -51,8 +51,8 @@ def execute(fname,text):
 
 fp=os.popen("date")
 date1=fp.read()
-execute("/root/Desktop/test",date1)
+execute("/root/Documents/test.sikuli/test",date1)
 
 fp=os.popen("date")
 date2=fp.read()
-execute("/root/Desktop/test2",date2)
+execute("/root/Documents/test.sikuli/test2",date2)
