@@ -5,98 +5,156 @@
 ### 二. 各软件包含的文件 ###
 **Firefox浏览器**
 
-1.  test-firefox.sikuli/
+1. test-firefox.sikuli/
 	1.  运行脚本test-firefox.py、test-firefox.html
 	2.  运行脚本时需要用到的图片*********.png
 	3.  运行脚本时生成的截图open*********.png
 	4.  运行脚本时生成的截图finish*********.png
-	5.  运行时生成的中间结果reasult
+	5.  运行时生成的中间结果result
+2. 用到的软件
+	1. Firefox浏览器
+		- http://www.firefox.com.cn/download/官网下载，选择合适的版本
+		- 解压后可通过执行其脚本直接运行
 	
 **thunderbird邮件客户端**
 
 1. test-mail.sikuli/
-  1.  运行脚本test-mail.py、test-mail.html
+  	1.  运行脚本test-mail.py、test-mail.html
 	2.  运行脚本时需要用到的图片*********.png
 	3.  运行脚本时生成的截图open*********.png
 	4.  运行脚本时生成的截图write*********.png
-	5.  运行时生成的中间结果reasult
-	
+	5.  运行时生成的中间结果result
+2. 用到的软件
+	1. thunderbird邮件客户端
+		- https://www.mozilla.org/en-US/thunderbird/all.html官网下载，选择合适的版本
+		- 解压后可通过执行其脚本直接运行
+
 **OpenOffice文本编辑**
 
 1. test-odt.sikuli/
- 1.  运行脚本test-odt.py、test-odt.html
+	1.  运行脚本test-odt.py、test-odt.html
 	2.  运行脚本时需要用到的图片*********.png
-	3.  运行时生成的中间结果reasult
+	3.  运行时生成的中间结果result
 2. test.odt（运行脚本时修改的文件，默认放在/root/Desktop文件夹下）
+3. 用到的软件
+	1. OpenOffice办公软件
+		- http://www.openoffice.org/download/index.html官网下载，选择合适的版本
+		- 解压后进入文件夹en-US/DEBS/
+		- # dpkg -i *.deb
+		- # cd desktop-integration/
+		- # ls
+		- openoffice.org3.3-debian-menus_3.3-9556_all.deb
+		- # dpkg -i openoffice.org3.3-debian-menus_3.3-9556_all.deb
+		- 执行/usr/bin/openoffice4脚本即可直接运行 
 
-**OpenOffice文本编辑**
+**OpenOffice表格编辑**
 
 1. test-ods.sikuli/
-  1.  运行脚本test-ods.py、test-ods.html
+ 	1.  运行脚本test-ods.py、test-ods.html
 	2.  运行脚本时需要用到的图片*********.png
-	3.  运行时生成的中间结果reasult
+	3.  运行时生成的中间结果result
 2. test.ods（运行脚本时修改的文件，默认放在/root/Desktop文件夹下）
+3. 用到的软件
+	1. OpenOffice办公软件
+		- http://www.openoffice.org/download/index.html官网下载，选择合适的版本
+		- 解压后进入文件夹en-US/DEBS/
+		- # dpkg -i *.deb
+		- # cd desktop-integration/
+		- # ls
+		- openoffice.org3.3-debian-menus_3.3-9556_all.deb
+		- # dpkg -i openoffice.org3.3-debian-menus_3.3-9556_all.deb
+		- 执行/usr/bin/openoffice4脚本即可直接运行 
 
 **OpenOffice幻灯片编辑**
 
 1. test-odp.sikuli/
-  1.  运行脚本test-odp.py、test-odp.html
+  	1.  运行脚本test-odp.py、test-odp.html
 	2.  运行脚本时需要用到的图片*********.png
-	3.  运行时生成的中间结果reasult
+	3.  运行时生成的中间结果result
 2. test.odp（运行脚本时修改的文件，默认放在/root/Desktop文件夹下）
+3. 用到的软件
+	1. OpenOffice办公软件
+		- http://www.openoffice.org/download/index.html官网下载，选择合适的版本
+		- 解压后进入文件夹en-US/DEBS/
+		- # dpkg -i *.deb
+		- # cd desktop-integration/
+		- # ls
+		- openoffice.org3.3-debian-menus_3.3-9556_all.deb
+		- # dpkg -i openoffice.org3.3-debian-menus_3.3-9556_all.deb
+		- 执行/usr/bin/openoffice4脚本即可直接运行 
 
 **leafpad文本编辑**
 
 1. test.sikuli/
- 1. 运行脚本test.py、test.html
+ 	1. 运行脚本test.py、test.html
 	2.  运行脚本时需要用到的图片*********.png
-	3.  运行时生成的中间结果reasult
+	3.  运行时生成的中间结果result
 2. test（运行脚本时修改的文件，默认放在/root/Desktop文件夹下）
 3. test2（运行脚本时修改的文件，默认放在/root/Desktop文件夹下）
+注：此测试脚本中添加了函数调用功能，将对文本的编辑保存操作写在一个函数中。第一次调用此函数时对test文件进行操作，第二次调用此函数时对test2文件进行操作。
+4. 用到的软件
+	1. leafpad软件
+		- 系统自带，无需安装
 
 **lxmusic音乐播放器**
 
 1. tes-music.sikuli/
- 1. 1. 运行脚本test-music.py、test-music.html
+ 	1. 运行脚本test-music.py、test-music.html
 	2.  运行脚本时需要用到的图片*********.png
 	3.  运行脚本时生成的截图play*********.png
-	4.  运行时生成的中间结果reasult
+	4.  运行时生成的中间结果result
 2. sikuli.mp3（运行脚本时播放的音乐文件，默认放在/root/Desktop文件夹下）
+3. 用到的软件
+	1. lxmusic音乐播放器
+		- # apt-get install lxmusic-dbg
+		- 执行/usr/bin/lxmusic脚本即可直接运行
 
 **GNOME Mplayer视频播放器**
 
 1. tes-video.sikuli/
- 1. 1. 运行脚本test-video.py、test-video.html
+ 	1. 运行脚本test-video.py、test-video.html
 	2.  运行脚本时需要用到的图片*********.png
 	3.  运行脚本时生成的截图play*********.png
-	4.  运行时生成的中间结果reasult
+	4.  运行时生成的中间结果result
 2. sikuli.mp4（运行脚本时播放的音乐文件，默认放在/root/Desktop文件夹下）
+3. 用到的软件
+	1. GNOME Mplayer视频播放器
+		- 系统自带，无需安装
 
 **gpicview图片浏览**
 
 1. tes-gpicview.sikuli/
- 1. 1. 运行脚本test-gpicview.py、test-gpicview.html
+ 	1. 运行脚本test-gpicview.py、test-gpicview.html
 	2.  运行脚本时需要用到的图片*********.png
 	3.  运行脚本时生成的截图view*********.png
-	4.  运行时生成的中间结果reasult
+	4.  运行时生成的中间结果result
 2. sikuli.png（运行脚本时浏览的图片文件，默认放在/root/Desktop文件夹下）
+3. 用到的软件
+	1. gpicview图片浏览器
+		- 系统自带，无需安装
 
 **pdf文件浏览**
 
 1. test-pdf.sikuli/
- 1. 运行脚本test-pdf.py、test-pdf.html
+	1. 运行脚本test-pdf.py、test-pdf.html
 	2.  运行脚本时需要用到的图片*********.png
 	3.  运行脚本时生成的截图view*********.png
-	4.  运行时生成的中间结果reasult
+	4.  运行时生成的中间结果result
 2. sikuli.pdf（运行脚本时浏览的pdf文件，默认放在/root/Desktop文件夹下）
+3. 用到的软件
+	1. Document viewer阅读器
+		- 系统自带，无需安装
 
 **pidgin实时会话**
 
 1. test-pidgin.sikuli/
-1. 运行脚本test-pidgin.py、test-pidgin.html
+	1. 运行脚本test-pidgin.py、test-pidgin.html
 	2.  运行脚本时需要用到的图片*********.png
 	3.  运行脚本时生成的截图chat*********.png
-	4.  运行时生成的中间结果reasult
+	4.  运行时生成的中间结果result
+3. 用到的软件
+	1. Document viewer阅读器
+		- 系统自带，无需安装
 
 ### 三. 脚本运行方法 ###
 
