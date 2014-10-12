@@ -1,7 +1,15 @@
 #!/bin/bash
 ./v_clean.sh
 ./test_deploy.sh 
- 
+# if no test case will return 1
+
+#if no test case will exit 
+if [ "$?" != "0" ]
+then
+exit 1
+fi
+
+
 rm -rf ../logfifo
 mkfifo ../logfifo
 

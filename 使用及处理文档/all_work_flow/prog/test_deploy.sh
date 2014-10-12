@@ -3,6 +3,13 @@
 echo "$(date "+%Y.%m.%d.%H.%M") test_deploy start"
 
 tstcs=`ls  ./test_case`  #get test case name
+
+if [ ${tstcs} = "" ]
+then 
+echo "error please put test case"
+exit 1
+fi
+
 tar -zxf ./test_case/${tstcs} -C ./test_case  #decompress test case
 rm -rf ./test_case/*.tar.gz                   #delete .tar.gz
 tstcs=`ls  ./test_case`                       #get test case dir name
@@ -31,3 +38,5 @@ umount  ./rawmount
 
 
 echo "$(date "+%Y.%m.%d.%H.%M") test_deploy finish"
+
+exit 0
