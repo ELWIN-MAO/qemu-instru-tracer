@@ -73,7 +73,7 @@
 *.fns
 *.kys
 *.pg
-*.pycp
+*.pyc
 *.toc
 *.tp
 *.vr
