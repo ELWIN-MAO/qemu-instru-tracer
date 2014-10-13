@@ -69,12 +69,11 @@
 *.fn
 *.ky
 *.log
-*.pdf
 *.cps
 *.fns
 *.kys
 *.pg
-*.pyc
+*.pycp
 *.toc
 *.tp
 *.vr
