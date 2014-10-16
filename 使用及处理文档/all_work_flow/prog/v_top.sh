@@ -4,7 +4,6 @@ echo "$(date "+%Y.%m.%d.%H.%M") top start"
 
 log_path="../log_qie_kuai"
 log_done="../log_processed"
-#log_done="/mnt/freenas/log_processed"
 
 
 while true :
@@ -53,7 +52,12 @@ echo "$(date "+%Y.%m.%d.%H.%M") hash_a  ${m_file}.a.stat"
 echo "$(date "+%Y.%m.%d.%H.%M") hash_b  ${m_file}.b.stat"
 ./hash_b.py   < "${m_file}.b.stat"
 
-mv   $log_path/$m_file $log_done/ 
+#mv   $log_path/$m_file $log_done/ 
+rm -rf  $log_path/$m_file
+rm -rf  ${m_file}.a
+rm -rf  ${m_file}.a.stat
+rm -rf  ${m_file}.b
+rm -rf  ${m_file}.b.stat
 done
 else
 sleep 3
@@ -62,7 +66,6 @@ fi
 
 done
 
-#sort ./error_opcode.txt  | uniq > error_opcode_uniq.txt
 
 echo "$(date "+%Y.%m.%d.%H.%M") top finish"
 

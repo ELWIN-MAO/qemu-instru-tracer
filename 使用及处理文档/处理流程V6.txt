@@ -30,11 +30,18 @@ echo $m_file
 ./hash_a.py   < "${m_file}.a.stat" 
 ./hash_b.py   < "${m_file}.b.stat"
 
-mv   $log_path/$m_file $log_done/ 
+#mv   $log_path/$m_file $log_done/
+
+#删除  0.log 0.log.a 0.log.b 0.log.a.stat 0.log.b.stat
+rm -rf  $log_path/$m_file
+rm -rf  ${m_file}.a
+rm -rf  ${m_file}.a.stat
+rm -rf  ${m_file}.b
+rm -rf  ${m_file}.b.stat
 done
 
 
-输入 0.log 1.log   输出0.log.a 0.log.b 0.log.a.stat 0.log.b.stat
+#输入 0.log 1.log   输出0.log.a 0.log.b 0.log.a.stat 0.log.b.stat
 xxx.hsha
 xxx.hshb
 empty_block.txt
@@ -50,9 +57,15 @@ empty_block.txt
 for m_file in `ls -v   *.hshb`
 do
 ./stat_hash_b.py  <  ${m_file} > ${m_file}.stat
+
+#删除xxxx.hshb
+rm -rf ${m_file}
 done
 
-输入xxxx.hshb 输出xxx.hshb.stat
+#输入xxxx.hshb 输出xxx.hshb.stat
+
+
+
 
 
 4.
@@ -64,6 +77,8 @@ for m_file in `ls -v  *.hsha`
 do
 m=${m_file%.*}
 ./join.py   ${m_file}    ${m}.hshb.stat
+
+rm -rf   ${m_file}   ${m}.hshb.stat
 done
 
 sort fa_error.txt |uniq > fa_error_uniq.txt
@@ -79,6 +94,7 @@ sort fb_error.txt |uniq > fb_eeror_uniq.txt
 for m_file in `ls -v  *.join`
 do
 ./thread_stat.py  < $m_file   > $m_file.subth
+rm -rf $m_file
 done
 
 输入 xxx.join   输出 xxx.join.subth
@@ -90,6 +106,7 @@ done
 for m_file in `ls -v  *.join.subth`
 do
 ./hash_thread.py  < $m_file
+rm -rf $m_file
 done
 
 

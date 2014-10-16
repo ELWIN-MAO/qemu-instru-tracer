@@ -4,7 +4,7 @@ echo "$(date "+%Y.%m.%d.%H.%M") test_deploy start"
 
 tstcs=`ls  ./test_case`  #get test case name
 
-if [ ${tstcs} = "" ]
+if [ "${tstcs}" = "" ]
 then 
 echo "error please put test case"
 exit 1
@@ -23,7 +23,7 @@ chmod +x ./aaa.sh
 umount ./rawmount
 ##mount  ./cesh.img ./rawmount   #should be run as root
 mount ../lubuntu/lubuntu12.04.raw  -o loop,offset=1048576 ./rawmount/
-
+sleep 5
 #mov aaa.sh to lubuntu 
 mv ./aaa.sh ./rawmount/root/new/
 
@@ -36,6 +36,7 @@ mv ./test_case/${tstcs}  ./rawmount/root/Documents
 sleep 5
 umount  ./rawmount
 
+sleep 5
 
 echo "$(date "+%Y.%m.%d.%H.%M") test_deploy finish"
 
