@@ -32,13 +32,14 @@ def tongji(m_queue2) :
 while True:
     line=log.readline()
     if not line : break
-    if line.startswith("0x"):
-        m_queue.append(line)   #add line to queue
     if line.startswith("T"):  #start with Trace
         words=line.split()
-        serial=words[1].strip() #get block serial  number
-#        print m_queue
+        serial=words[1] #get block serial  number
+        line=log.readline()
+        while ( cmp(line,"\n") != 0 and  cmp(line,'')!=0 and line.startswith("0x") ) :
+            m_queue.append(line)
+            line=log.readline()
         print serial,
+#        print m_queue
         tongji(m_queue)
         m_queue=[]              #clear queue
-

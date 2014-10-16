@@ -18,15 +18,15 @@ sleep 5
 
 umount ./rawmount
 
-cp ./v_all_sort.html ./v_all_sort.txt ./v_all_thread.thst ./v_all_thread.thst.html ./test_result/${tstrlt}
+mv ./qemu_log.txt ./v_top_log.txt ./empty_block.txt ./fa_error_uniq.txt ./fa_error.txt  ./fb_error.txt  ./fb_error_uniq.txt  ./v_all_sort.html ./v_all_sort.txt ./v_all_thread.thst ./v_all_thread.thst.html ./test_result/${tstrlt}
 
-cd ./test_result
+#cd ./test_result
 
-tar zcf ${tstrlt}.tar.gz  ${tstrlt}
+#tar zcf ${tstrlt}.tar.gz  ${tstrlt}
 
 
-rm -rf ./${tstrlt}
+#rm -rf ./${tstrlt}
 
-cd -
+#cd -
 
 echo "$(date "+%Y.%m.%d.%H.%M") get_result  finish"
