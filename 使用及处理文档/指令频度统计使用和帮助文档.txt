@@ -84,3 +84,59 @@ sleep 10
 /usr/local/runScript -r /root/Documents/test.sikuli/     #执行skuli                         
 echo "stop" >> /root/new/bbb.txt
 shutdown -h now                                      #自动关机    
+
+
+
+
+测试用例制作方法：
+##############################
+1.
+每一个测试用例的名字都不一样
+例如test-leafpad.sikuli
+
+2.
+各个测试用例需要的原始文件就事先已经保存在了
+测试用例所在的文件夹
+
+
+生成的截图文件也保存在测试用例所在的目录
+
+
+其中有一个文件叫做testrun.txt，其中的代码表示如何执行这个测试用例。
+例如
+/usr/local/runScript -r /root/Documents/test***.sikuli/  #程序和文件都用绝对路径
+
+3.
+将测试用例打包生成xxx.tar.gz格式
+tar zcf  test-leafpad.sikuli.tar.zg  test-leafpad.sikuli
+
+
+
+真正开始的统计使用方法
+#############################################
+1.
+使用root账号登陆
+cd all_work_flow
+mkdir lubuntu
+cp /xxxxx/lubuntu12.04.raw lubuntu
+
+
+2.
+cd all_work_flow/prog
+
+3.
+运行./test_clean.sh清空上次的测试用例和测试结果
+
+3.
+将测试用例xxxx.tar.gz拷贝到test_case目录中
+
+4.
+./start_all.sh 自动处理所有流程
+
+5.
+生成结果存放在./test_case目录当中。
+
+
+中途如果想停止
+./v_kill.sh 关掉所有的程序
+./v_clean.sh 清理中间结果，以及最后结果，只保留程序代码。

@@ -4,3 +4,8 @@ rm -rf ./test_result/
 
 mkdir ./test_case
 mkdir ./test_result
+
+umount ./rawmount
+sleep 5
+rmdir ./rawmount
+mkdir ./rawmount

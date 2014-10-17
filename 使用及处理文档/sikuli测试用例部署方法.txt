@@ -1,0 +1,31 @@
+部署方法：
+#############################
+mount lubuntu.raw  到./rawmount
+1.拷贝test***.sikuli.tar.gz 到固定的目录./rawmount/root/Documents
+
+2.解压
+test***.sikuli.tar.gz
+获取到test***.sikuli文件夹
+
+3.
+从test***.sikuli文件夹中读取testrun.txt
+读取其内容到
+aaa.sh
+
+#!/bin/bash
+rm -rf /root/new/bbb.txt
+echo "start" > /root/new/bbb.txt
+date >> /root/new/bbb.txt
+#####要替换的命令/usr/local/runScript -r /root/Documents/test-ods.sikuli
+date >> /root/new/bbb.txt
+echo "stop" >> /root/new/bbb.txt
+lxterminal &
+#shutdown -h now
+
+
+将执行完的测试用从lubuntu拷贝出来的时候必须知道拷贝哪个文件夹
+方法是部署的时候，建立一个同名的文件夹在./test_result目录下
+4.
+umount rawmount
+运行虚拟机进行指令频度统计，完毕后将测试用例所在的文件夹打包拷贝出来，返回给用户
+
