@@ -9,7 +9,7 @@
 
 3. 转换vmdk到raw格式
 由于vmdk格式的虚拟磁盘不能直接在host中挂载读写，所以需要将vmdk转换为raw格式。
-qemu-img convert -f vmkd -O raw  lubuntu12.04.vmdk lubuntu12.04.raw
+qemu-img convert -f vmdk -O raw  lubuntu12.04.vmdk lubuntu12.04.raw
 
 4.使用raw格式的磁盘
 qemu-system-i386   -hda  ./lubuntu12.04_2014.8.18/lubuntu12.04.raw   -boot c  -m 2048   -k en-us  -d exec,in_asm -D ./log-zml.txt
