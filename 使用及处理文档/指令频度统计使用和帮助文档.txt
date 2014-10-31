@@ -125,7 +125,8 @@ cp /xxxxx/lubuntu12.04.raw lubuntu
 cd all_work_flow/prog
 
 3.
-运行./test_clean.sh清空上次的测试用例和测试结果
+运行./test_init.sh初始化环境（只需要运行一次）
+./test_clean.sh清空上次的测试用例和测试结果
 
 3.
 将测试用例xxxx.tar.gz拷贝到test_case目录中
