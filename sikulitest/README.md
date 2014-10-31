@@ -85,7 +85,7 @@
 
 **leafpad文本编辑**
 
-1. test.sikuli/
+1. test-leafpad.sikuli/
  	1. 运行脚本test.py、test.html
 	2.  运行脚本时需要用到的图片*********.png
 	3.  运行时生成的中间结果result
