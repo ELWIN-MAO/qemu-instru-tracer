@@ -466,7 +466,7 @@ int cpu_exec(CPUArchState *env)
 					target_ulong tid=env->regs[R_ESP]&0xffffe000,cur;
 					char pname[20]="\0";							
 					cpu_memory_rw_debug(cpu,tid,(uint8_t *)&cur,sizeof(cur),0);
-					cpu_memory_rw_debug(cpu,cur+0x2cc,(uint8_t *)&pname,sizeof(pname),0);
+					cpu_memory_rw_debug(cpu,cur+0x2e4,(uint8_t *)&pname,sizeof(pname),0);
                     qemu_log("E "TARGET_FMT_lx" "TARGET_FMT_lx" "TARGET_FMT_lx" %s\n",tb->index,env->cr[3],tid,pname);	
                 }
                 /* see if we can patch the calling TB. When the TB
