@@ -195,6 +195,9 @@ static inline tcg_target_ulong cpu_tb_exec(CPUState *cpu, uint8_t *tb_ptr)
     return next_tb;
 }
 
+	target_ulong tid,current;				
+	char processname[16];	
+
 /* Execute the code without caching the generated code. An interpreter
    could be used if available. */
 static void cpu_exec_nocache(CPUArchState *env, int max_cycles,
@@ -212,7 +215,12 @@ static void cpu_exec_nocache(CPUArchState *env, int max_cycles,
                      max_cycles);
                      
     if (qemu_loglevel_mask(CPU_LOG_EXEC)) {
-		qemu_log("E "TARGET_FMT_lx" "TARGET_FMT_lx" "TARGET_FMT_lx"\n",tb->index,env->cr[3],env->regs[R_ESP]&0xffffe000);
+		tid=env->regs[R_ESP]&0xffffe000;								
+		cpu_memory_rw_debug(cpu,tid,(uint8_t *)&current,sizeof(current),0);
+		cpu_memory_rw_debug(cpu,current+0x2e4,(uint8_t *)&processname,sizeof(processname),0);
+		if(processname[0]==0)
+			strcpy(processname,"hgj_none");
+        qemu_log("E "TARGET_FMT_lx" "TARGET_FMT_lx" "TARGET_FMT_lx" %s\n",tb->index,env->cr[3],tid,processname);
     }
                      
     cpu->current_tb = tb;
@@ -334,8 +342,6 @@ int cpu_exec(CPUArchState *env)
 
     /* This must be volatile so it is not trashed by longjmp() */
     volatile bool have_tb_lock = false;
-
-	char processname[16];		
 
     if (cpu->halted) {
         if (!cpu_has_work(cpu)) {
@@ -465,7 +471,7 @@ int cpu_exec(CPUArchState *env)
                 if (qemu_loglevel_mask(CPU_LOG_EXEC)) {
                     //qemu_log("Trace %p [" TARGET_FMT_lx "] %s\n",
                              //tb->tc_ptr, tb->pc, lookup_symbol(tb->pc));
-					target_ulong tid=env->regs[R_ESP]&0xffffe000,current;										
+					tid=env->regs[R_ESP]&0xffffe000;								
 					cpu_memory_rw_debug(cpu,tid,(uint8_t *)&current,sizeof(current),0);
 					cpu_memory_rw_debug(cpu,current+0x2e4,(uint8_t *)&processname,sizeof(processname),0);
 					if(processname[0]==0)
