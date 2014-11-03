@@ -335,6 +335,8 @@ int cpu_exec(CPUArchState *env)
     /* This must be volatile so it is not trashed by longjmp() */
     volatile bool have_tb_lock = false;
 
+	char processname[16];		
+
     if (cpu->halted) {
         if (!cpu_has_work(cpu)) {
             return EXCP_HALTED;
@@ -463,11 +465,12 @@ int cpu_exec(CPUArchState *env)
                 if (qemu_loglevel_mask(CPU_LOG_EXEC)) {
                     //qemu_log("Trace %p [" TARGET_FMT_lx "] %s\n",
                              //tb->tc_ptr, tb->pc, lookup_symbol(tb->pc));
-					target_ulong tid=env->regs[R_ESP]&0xffffe000,cur;
-					char pname[20]="\0";							
-					cpu_memory_rw_debug(cpu,tid,(uint8_t *)&cur,sizeof(cur),0);
-					cpu_memory_rw_debug(cpu,cur+0x2e4,(uint8_t *)&pname,sizeof(pname),0);
-                    qemu_log("E "TARGET_FMT_lx" "TARGET_FMT_lx" "TARGET_FMT_lx" %s\n",tb->index,env->cr[3],tid,pname);	
+					target_ulong tid=env->regs[R_ESP]&0xffffe000,current;										
+					cpu_memory_rw_debug(cpu,tid,(uint8_t *)&current,sizeof(current),0);
+					cpu_memory_rw_debug(cpu,current+0x2e4,(uint8_t *)&processname,sizeof(processname),0);
+					if(processname[0]==0)
+						strcpy(processname,"hgj_none");
+                    qemu_log("E "TARGET_FMT_lx" "TARGET_FMT_lx" "TARGET_FMT_lx" %s\n",tb->index,env->cr[3],tid,processname);	
                 }
                 /* see if we can patch the calling TB. When the TB
                    spans two pages, we cannot safely do a direct
