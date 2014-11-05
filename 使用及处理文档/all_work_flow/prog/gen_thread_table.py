@@ -15,7 +15,8 @@ head ="""<html>
 
 <tr>
     <th>pid</th>
-    <th>tid</th>"""
+    <th>tid</th>
+    <th>tname</th>"""
 
 
 print head
@@ -48,8 +49,9 @@ while True:
     print "<tr>"
     print "<td>"+words[0]+"</td>"
     print "<td>"+words[1]+"</td>"
+    print "<td>"+words[2]+"</td>"
     dict={}
-    for i in range(2,len(words),2):
+    for i in range(3,len(words),2):
         dict[words[i]]=words[i+1]
     for opcode in all_inst:
         if dict.has_key(opcode):

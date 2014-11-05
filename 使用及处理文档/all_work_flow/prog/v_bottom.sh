@@ -48,7 +48,7 @@ rm -rf $m_file
 done
 
 
-cat `ls -v *.hshth.thd` | sort  -k 1 -k 2  > v_all_thread.thst 
+cat `ls -v *.hshth.thd` | sort  -k 1 -k 2 -k 3 > v_all_thread.thst 
 
 rm -rf *.hshth.thd
 

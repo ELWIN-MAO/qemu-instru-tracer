@@ -35,9 +35,10 @@ while True:
     block_id=words[1] #get block_id
     pid   =words[2] #get pid
     tid   =words[3] #get tid
-    b_count=int(words[5]) #get b_count
+    tname =words[4] #get tname
+    b_count=int(words[6]) #get b_count
     if dict.has_key(block_id):
-        f_join.write(pid+' '+tid)  #only out put pid tid wich has a valid block_id
+        f_join.write(pid+' '+tid+' '+tname)  #only out put pid tid wich has a valid block_id
         ins_count=dict[block_id]
         for key in ins_count.keys():
              f_join.write(' '+key+" "+str(b_count*ins_count[key]))
