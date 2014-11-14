@@ -59,12 +59,17 @@ echo "$(date "+%Y.%m.%d.%H.%M") proc_all  v_all_thread.thst v_all.txt"
 
 sort -k 2nr -k 1 v_all.txt  > v_all_sort.txt
 
+rm -rf ./v_all.txt
+
 echo "$(date "+%Y.%m.%d.%H.%M") gen_thread_table"
 ./gen_thread_table.py  < v_all_thread.thst  > v_all_thread.thst.html
+
+rm -rf ./v_all_thread.thst
 
 echo "$(date "+%Y.%m.%d.%H.%M") gen_all_table"
 ./gen_all_table.py  < v_all_sort.txt  > v_all_sort.html
 
-
+rm -rf ./v_all_sort.txt
+rm -rf ./instru_set.txt
 
 echo "$(date "+%Y.%m.%d.%H.%M") bottom finish"
