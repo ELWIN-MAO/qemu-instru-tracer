@@ -11,6 +11,7 @@
 	3.  运行脚本时生成的截图open*********.png
 	4.  运行脚本时生成的截图finish*********.png
 	5.  运行时生成的中间结果result
+	6.  运行此用例时执行的文件testrun.txt
 2. 用到的软件
 	1. Firefox浏览器
 		- http://www.firefox.com.cn/download/官网下载，选择合适的版本
@@ -24,6 +25,7 @@
 	3.  运行脚本时生成的截图open*********.png
 	4.  运行脚本时生成的截图write*********.png
 	5.  运行时生成的中间结果result
+	6.  运行此用例时执行的文件testrun.txt
 2. 用到的软件
 	1. thunderbird邮件客户端
 		- https://www.mozilla.org/en-US/thunderbird/all.html官网下载，选择合适的版本
@@ -35,6 +37,7 @@
 	1.  运行脚本test-odt.py、test-odt.html
 	2.  运行脚本时需要用到的图片*********.png
 	3.  运行时生成的中间结果result
+	4.  运行此用例时执行的文件testrun.txt
 2. test.odt（运行脚本时修改的文件，默认放在/root/Desktop文件夹下）
 3. 用到的软件
 	1. OpenOffice办公软件
@@ -53,6 +56,7 @@
  	1.  运行脚本test-ods.py、test-ods.html
 	2.  运行脚本时需要用到的图片*********.png
 	3.  运行时生成的中间结果result
+	4.  运行此用例时执行的文件testrun.txt
 2. test.ods（运行脚本时修改的文件，默认放在/root/Desktop文件夹下）
 3. 用到的软件
 	1. OpenOffice办公软件
@@ -71,6 +75,7 @@
   	1.  运行脚本test-odp.py、test-odp.html
 	2.  运行脚本时需要用到的图片*********.png
 	3.  运行时生成的中间结果result
+	4.  运行此用例时执行的文件testrun.txt
 2. test.odp（运行脚本时修改的文件，默认放在/root/Desktop文件夹下）
 3. 用到的软件
 	1. OpenOffice办公软件
@@ -89,6 +94,7 @@
  	1. 运行脚本test.py、test.html
 	2.  运行脚本时需要用到的图片*********.png
 	3.  运行时生成的中间结果result
+	4.  运行此用例时执行的文件testrun.txt
 2. test（运行脚本时修改的文件，默认放在/root/Desktop文件夹下）
 3. test2（运行脚本时修改的文件，默认放在/root/Desktop文件夹下）
 注：此测试脚本中添加了函数调用功能，将对文本的编辑保存操作写在一个函数中。第一次调用此函数时对test文件进行操作，第二次调用此函数时对test2文件进行操作。
@@ -103,6 +109,7 @@
 	2.  运行脚本时需要用到的图片*********.png
 	3.  运行脚本时生成的截图play*********.png
 	4.  运行时生成的中间结果result
+	5.  运行此用例时执行的文件testrun.txt
 2. sikuli.mp3（运行脚本时播放的音乐文件，默认放在/root/Desktop文件夹下）
 3. 用到的软件
 	1. lxmusic音乐播放器
@@ -116,6 +123,7 @@
 	2.  运行脚本时需要用到的图片*********.png
 	3.  运行脚本时生成的截图play*********.png
 	4.  运行时生成的中间结果result
+	5.  运行此用例时执行的文件testrun.txt
 2. sikuli.mp4（运行脚本时播放的音乐文件，默认放在/root/Desktop文件夹下）
 3. 用到的软件
 	1. GNOME Mplayer视频播放器
@@ -128,6 +136,7 @@
 	2.  运行脚本时需要用到的图片*********.png
 	3.  运行脚本时生成的截图view*********.png
 	4.  运行时生成的中间结果result
+	5.  运行此用例时执行的文件testrun.txt
 2. sikuli.png（运行脚本时浏览的图片文件，默认放在/root/Desktop文件夹下）
 3. 用到的软件
 	1. gpicview图片浏览器
@@ -140,6 +149,7 @@
 	2.  运行脚本时需要用到的图片*********.png
 	3.  运行脚本时生成的截图view*********.png
 	4.  运行时生成的中间结果result
+	5.  运行此用例时执行的文件testrun.txt
 2. sikuli.pdf（运行脚本时浏览的pdf文件，默认放在/root/Desktop文件夹下）
 3. 用到的软件
 	1. Document viewer阅读器
@@ -152,11 +162,15 @@
 	2.  运行脚本时需要用到的图片*********.png
 	3.  运行脚本时生成的截图chat*********.png
 	4.  运行时生成的中间结果result
+	5.  运行此用例时执行的文件testrun.txt
 3. 用到的软件
 	1. Document viewer阅读器
 		- 系统自带，无需安装
 
 ### 三. 脚本运行方法 ###
 
-- cd /usr/local
-- ./runScript -r /root/Documents/test*******.sikuli/
+1. 为每一个测试用例定义好相应的文件夹名称，并且都不相同，例如test-leafpad.sikuli为leafpad文本编辑器的测试用例。
+2. 各个测试用例需要的原始文件就事先已经保存在了测试用例所在的文件夹，例如执行文件test-leafpad.py以及执行脚本是需要进行匹配的图片文件等。生成的截图文件和日志文件也保存在测试用例所在的目录。其中名为testrun.txt的文件，其内容是执行此测试用例的命令。例如
+ - /usr/local/runScript -r /root/Documents/test-leafpad.sikuli/  #程序和文件都用绝对路径
+3. 将测试用例打包生成xxx.tar.gz格式
+ - tar zcf test-leafpad.sikuli.tar.gz  test-leafpad.sikuli
