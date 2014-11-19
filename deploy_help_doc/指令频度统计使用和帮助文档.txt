@@ -1,22 +1,43 @@
                                                      指令频度统计使用和帮助文档
-                                                                    
-
+一、服务器端部署                                                         
 1.制作虚拟磁盘并安装系统
-  由于qemu从一个空的虚拟磁盘开始安装系统十分缓慢，没法接受，所以选择用vmware虚拟机安装操作系统，生成lubuntu.vmdk这样的虚拟磁盘。
-2.将*.vmdk上传到服务器
-  运行qemu-system-i386   -hda  ./lubuntu12.04_2014.8.18/lubuntu12.04.vmdk   -boot c  -m 2048   -k en-us  -d exec,in_asm -D ./log-zml.txt
+  由于qemu从一个空的虚拟磁盘开始安装系统十分缓慢，没法接受，所以选择用vmware虚拟机安装操作系统，生成lubuntu12.04.vmdk这样的虚拟磁盘。
+2.将*.vmdk上传到124.16.141.162服务器
+myming@ubuntu-xyong:~$ pwd
+/home/myming
+
+myming@ubuntu-xyong:~$ ls lubuntu_10.17/
+lubuntu12.04.vmdk
+
+3. 
+cd /home/myming
+git clone https://github.com/xyongcn/qemu-instru-tracer
+
+cd ./qemu-instru-tracer
+./configure --target-list=i386-softmmu --prefix=/usr/local/qemu_mym  && make && make install
+会安装QEMU到/usr/loacl/qemu_mym/目录下面
+
+myming@ubuntu-xyong:~$ pwd
+/home/myming
+
+运行/usr/loacl/qemu_mym/qemu-system-i386   -hda  ./lubuntu_10.17/lubuntu12.04.vmdk   -boot c  -m 2048   -k en-us  -d exec,in_asm -D ./log-zml.txt
 这样的命令即可以使用vmdk虚拟机。
 
 3. 转换vmdk到raw格式
 由于vmdk格式的虚拟磁盘不能直接在host中挂载读写，所以需要将vmdk转换为raw格式。
-qemu-img convert -f vmdk -O raw  lubuntu12.04.vmdk lubuntu12.04.raw
+cd /home/myming/lubuntu_10.17
+
+/usr/loacl/qemu_mym/qemu-img convert -f vmdk -O raw  lubuntu12.04.vmdk lubuntu12.04.raw
 
 4.使用raw格式的磁盘
-qemu-system-i386   -hda  ./lubuntu12.04_2014.8.18/lubuntu12.04.raw   -boot c  -m 2048   -k en-us  -d exec,in_asm -D ./log-zml.txt
+cd /home/myming
+/usr/loacl/qemu_mym/qemu-system-i386   -hda  ./lubuntu_10.17/lubuntu12.04.raw   -boot c  -m 2048   -k en-us  -d exec,in_asm -D ./log-zml.txt
  
 5.挂载读写raw格式的磁盘
 
 5.1
+cd /home/myming/lubuntu_10.17
+
 fdisk  -l lubuntu12.04.raw
 
 Disk lubuntu12.04.raw: 85.9 GB, 85899345920 bytes
@@ -39,20 +60,29 @@ lubuntu12.04.raw5       136720384   152342527     7811072   82  Linux 交换 / Sol
 
 5.2
 挂载第一个主分区。
-mount -o loop,offset=1048576   lubuntu12.04.raw ../rawmount
+cd /home/myming
+mkdir rawmount
+mount -o loop,offset=1048576   ./lubuntu_10.17/lubuntu12.04.raw  ./rawmount
 cd rawmount下面即可以对第一个主分区中的内容进行读写操作。
 操作完毕后离开挂载点并umount rawmount
 
 
 
 6.lubuntu图形界面下自动登录特定账户
+启动lubuntu
+cd /home/myming
+
+/usr/loacl/qemu_mym/qemu-system-i386   -hda  ./lubuntu_10.17/lubuntu12.04.raw   -boot c  -m 2048   -k en-us
 
 6.1
+以root账号登陆lubuntu
+修改
 /etc/lxdm/default.conf   
 autologin=root #要登录的用户名 
 
 
 6.2
+修改
 /etc/lightdm/lightdm.conf  
 [SeatDefaults]  
 autologin-user=root #要登录的用户名 
@@ -87,57 +117,79 @@ shutdown -h now                                      #自动关机
 
 
 
-
-测试用例制作方法：
-##############################
-1.
-每一个测试用例的名字都不一样
-例如test-leafpad.sikuli
-
-2.
-各个测试用例需要的原始文件就事先已经保存在了
-测试用例所在的文件夹
+8.
+使用root账号登陆服务器
+cd /home/myming
 
 
-生成的截图文件也保存在测试用例所在的目录
+myming@ubuntu-xyong:~$ pwd
+/home/myming
 
 
-其中有一个文件叫做testrun.txt，其中的代码表示如何执行这个测试用例。
-例如
-/usr/local/runScript -r /root/Documents/test***.sikuli/  #程序和文件都用绝对路径
+myming@ubuntu-xyong:~$ ls
+qemu-instru-tracer
 
-3.
-将测试用例打包生成xxx.tar.gz格式
-tar zcf  test-leafpad.sikuli.tar.zg  test-leafpad.sikuli
+9.
+ln -s  qemu-instru-tracer/deploy_help_doc/all_work_flow/   git_tijiao
 
 
+myming@ubuntu-xyong:~$ cd git_tijiao/all_work_flow/
 
-真正开始的统计使用方法
-#############################################
-1.
-使用root账号登陆
-cd all_work_flow
-mkdir lubuntu
-cp /xxxxx/lubuntu12.04.raw lubuntu
+myming@ubuntu-xyong:~/git_tijiao/all_work_flow$ pwd
+/home/myming/git_tijiao/all_work_flow
+
+ln -s /home/mying/lubuntu_10.17/  lubuntu
 
 
-2.
-cd all_work_flow/prog
+10.
+cd /home/myming/git_tijiao/all_work_flow/prog
 
-3.
 运行./test_init.sh初始化环境（只需要运行一次）
 ./test_clean.sh清空上次的测试用例和测试结果
 
+#==========================
+#3.
+#将测试用例xxxx.tar.gz拷贝到test_case目录中
+#
+#4.
+#./start_all.sh 自动处理所有流程
+#
+#5.
+#生成结果存放在./test_case目录当中。
+#
+#
+#中途如果想停止
+#./v_kill.sh 关掉所有的程序
+#./v_clean.sh 清理中间结果，以及最后结果，只保留程序代码。
+#==========================================
+至此124.16.141.162机器上的指令频度的部署已经完成。
+
+
+二、web服务器端部署
+1.
+将/home/myming/qemu-instru-tracer/deploy_help_doc/web_test_prog/remote.sh
+拷贝到
+124.16.141.184机器上的/home/myming/目录下。
+
+2.
+配置web服务器（124.16.141.184）和运行QEMU的服务器（124.16.141.184）可以相互无密码ssh root登录。
+
+
+三、开始测试
+1.
+在浏览器中输入以下地址
+http://124.16.141.184/lxr/import
+
+2.
+选择
+version：linux-3.5.4  paltform:x86_32  testcase directory:testcase2 
+单击change按钮
+选择文件：
+这里有一个准备好的测试用例（测试用例的制作方法见sikuli使用文档）
+/home/myming/qemu-instru-tracer/deploy_help_doc/all_work_flow/test-music.sikuli.tar.gz
+单击UploadFlie
+文件上传成功后
+单击Excute Test Script按钮即可执行测试用例。
+
 3.
-将测试用例xxxx.tar.gz拷贝到test_case目录中
-
-4.
-./start_all.sh 自动处理所有流程
-
-5.
-生成结果存放在./test_case目录当中。
-
-
-中途如果想停止
-./v_kill.sh 关掉所有的程序
-./v_clean.sh 清理中间结果，以及最后结果，只保留程序代码。
+测试完成后web浏览器会显示测试结果。
