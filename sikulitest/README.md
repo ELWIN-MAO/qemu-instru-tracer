@@ -1,8 +1,25 @@
 ## sikuli自动测试脚本 ##
 **sikuli** 是一种自动化测试的软件，此文件夹中包含测试脚本以及脚本运行时调用的文件等。
-### 一. 软件录制脚本 ###
+### 一.sikuli软件的安装###
+在安装sikuli软件之前，首先要安装opencv、tesseract和java。
+
+ 1. 安装opencv
+  - 参考网址：http://blog.csdn.net/xiaoxiong345064855/article/details/7585422
+ 2. 安装tesseract
+  - 参考网址：http://miphol.com/muse/2013/05/install-tesseract-ocr-on-ubunt.html
+ 3. 安装java6
+ 4. 安装Sikuli
+  - 下载网址：https://launchpad.net/sikuli/+download
+   - cp /home/**/Downloads/sikuli-setup.jar /usr/local
+   - java -jar sikuli-setop.jar
+    
+	注：安装完成后查看当前文件夹下的SikuliX-1.0.1-SetupLog.txt文件中是否有报错。若有报错，则将/usr/lib下的libopencv_core.so.2.4.9 libopencv_highgui.so.2.4.9 libopencv_imgproc.so.2.4.9拷贝到/usr/local/lib文件夹下，并建立软链接，libopencv_core.so.2.4 libopencv_higugui.so.2.4 libopencv_imgproc.so.2.4。若/usr/lib文件夹下也没有这三个文件，则在/usr/local/opencv-2.4.9文件夹下查找，找到此三个文件后分别复制到/usr/lib和/usr/local/lib文件夹下，并建立软链接。然后在命令行中输入
+    - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+    
+	如果安装过程中出现其他问题，下载https://launchpad.net/sikuli/+download页面中的 Sikuli-1.0.1-Supplemental-LinuxVisionProxy.zip文件，解压后运行其中的可执行文件进行检查。
+### 二. 软件录制脚本 ###
 此文件夹内包含多种软件的录制脚本，主要有Firefox浏览器、thunderbird邮件客户端、OpenOffice中文本编辑、幻灯片编辑以及表格编辑、leafpad文本编辑、lxmuisc音乐播放、gpicview图片浏览、Pidgin实时会话、pdf文本查看以及视频播放等软件的脚本。
-### 二. 各软件包含的文件 ###
+### 三. 各软件包含的文件 ###
 **Firefox浏览器**
 
 1. test-firefox.sikuli/
@@ -167,7 +184,7 @@
 	1. Document viewer阅读器
 		- 系统自带，无需安装
 
-### 三. 脚本运行方法 ###
+### 四. 脚本运行方法 ###
 
 1. 为每一个测试用例定义好相应的文件夹名称，并且都不相同，例如test-leafpad.sikuli为leafpad文本编辑器的测试用例。
 2. 各个测试用例需要的原始文件就事先已经保存在了测试用例所在的文件夹，例如执行文件test-leafpad.py以及执行脚本是需要进行匹配的图片文件等。生成的截图文件和日志文件也保存在测试用例所在的目录。其中名为testrun.txt的文件，其内容是执行此测试用例的命令。例如
