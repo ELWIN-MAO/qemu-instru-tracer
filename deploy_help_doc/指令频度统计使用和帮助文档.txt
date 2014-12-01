@@ -1,8 +1,8 @@
-                                                     Ö¸ÁîÆµ¶ÈÍ³¼ÆÊ¹ÓÃºÍ°ïÖúÎÄµµ
-Ò»¡¢·şÎñÆ÷¶Ë²¿Êğ                                                         
-1.ÖÆ×÷ĞéÄâ´ÅÅÌ²¢°²×°ÏµÍ³
-  ÓÉÓÚqemu´ÓÒ»¸ö¿ÕµÄĞéÄâ´ÅÅÌ¿ªÊ¼°²×°ÏµÍ³Ê®·Ö»ºÂı£¬Ã»·¨½ÓÊÜ£¬ËùÒÔÑ¡ÔñÓÃvmwareĞéÄâ»ú°²×°²Ù×÷ÏµÍ³£¬Éú³Élubuntu12.04.vmdkÕâÑùµÄĞéÄâ´ÅÅÌ¡£
-2.½«*.vmdkÉÏ´«µ½124.16.141.162·şÎñÆ÷
+                                                     æŒ‡ä»¤é¢‘åº¦ç»Ÿè®¡ä½¿ç”¨å’Œå¸®åŠ©æ–‡æ¡£
+ä¸€ã€æœåŠ¡å™¨ç«¯éƒ¨ç½²                                                         
+1.åˆ¶ä½œè™šæ‹Ÿç£ç›˜å¹¶å®‰è£…ç³»ç»Ÿ
+  ç”±äºqemuä»ä¸€ä¸ªç©ºçš„è™šæ‹Ÿç£ç›˜å¼€å§‹å®‰è£…ç³»ç»Ÿååˆ†ç¼“æ…¢ï¼Œæ²¡æ³•æ¥å—ï¼Œæ‰€ä»¥é€‰æ‹©ç”¨vmwareè™šæ‹Ÿæœºå®‰è£…æ“ä½œç³»ç»Ÿï¼Œç”Ÿæˆlubuntu12.04.vmdkè¿™æ ·çš„è™šæ‹Ÿç£ç›˜ã€‚
+2.å°†*.vmdkä¸Šä¼ åˆ°124.16.141.162æœåŠ¡å™¨
 myming@ubuntu-xyong:~$ pwd
 /home/myming
 
@@ -15,25 +15,25 @@ git clone https://github.com/xyongcn/qemu-instru-tracer
 
 cd ./qemu-instru-tracer
 ./configure --target-list=i386-softmmu --prefix=/usr/local/qemu_mym  && make && make install
-»á°²×°QEMUµ½/usr/loacl/qemu_mym/Ä¿Â¼ÏÂÃæ
+ä¼šå®‰è£…QEMUåˆ°/usr/loacl/qemu_mym/ç›®å½•ä¸‹é¢
 
 myming@ubuntu-xyong:~$ pwd
 /home/myming
 
-ÔËĞĞ/usr/loacl/qemu_mym/qemu-system-i386   -hda  ./lubuntu_10.17/lubuntu12.04.vmdk   -boot c  -m 2048   -k en-us  -d exec,in_asm -D ./log-zml.txt
-ÕâÑùµÄÃüÁî¼´¿ÉÒÔÊ¹ÓÃvmdkĞéÄâ»ú¡£
+è¿è¡Œ/usr/loacl/qemu_mym/qemu-system-i386   -hda  ./lubuntu_10.17/lubuntu12.04.vmdk   -boot c  -m 2048   -k en-us  -d exec,in_asm -D ./log-zml.txt
+è¿™æ ·çš„å‘½ä»¤å³å¯ä»¥ä½¿ç”¨vmdkè™šæ‹Ÿæœºã€‚
 
-3. ×ª»»vmdkµ½raw¸ñÊ½
-ÓÉÓÚvmdk¸ñÊ½µÄĞéÄâ´ÅÅÌ²»ÄÜÖ±½ÓÔÚhostÖĞ¹ÒÔØ¶ÁĞ´£¬ËùÒÔĞèÒª½«vmdk×ª»»Îªraw¸ñÊ½¡£
+3. è½¬æ¢vmdkåˆ°rawæ ¼å¼
+ç”±äºvmdkæ ¼å¼çš„è™šæ‹Ÿç£ç›˜ä¸èƒ½ç›´æ¥åœ¨hostä¸­æŒ‚è½½è¯»å†™ï¼Œæ‰€ä»¥éœ€è¦å°†vmdkè½¬æ¢ä¸ºrawæ ¼å¼ã€‚
 cd /home/myming/lubuntu_10.17
 
 /usr/loacl/qemu_mym/qemu-img convert -f vmdk -O raw  lubuntu12.04.vmdk lubuntu12.04.raw
 
-4.Ê¹ÓÃraw¸ñÊ½µÄ´ÅÅÌ
+4.ä½¿ç”¨rawæ ¼å¼çš„ç£ç›˜
 cd /home/myming
 /usr/loacl/qemu_mym/qemu-system-i386   -hda  ./lubuntu_10.17/lubuntu12.04.raw   -boot c  -m 2048   -k en-us  -d exec,in_asm -D ./log-zml.txt
  
-5.¹ÒÔØ¶ÁĞ´raw¸ñÊ½µÄ´ÅÅÌ
+5.æŒ‚è½½è¯»å†™rawæ ¼å¼çš„ç£ç›˜
 
 5.1
 cd /home/myming/lubuntu_10.17
@@ -42,83 +42,83 @@ fdisk  -l lubuntu12.04.raw
 
 Disk lubuntu12.04.raw: 85.9 GB, 85899345920 bytes
 255 heads, 63 sectors/track, 10443 cylinders, total 167772160 sectors
-Units = ÉÈÇø of 1 * 512 = 512 bytes
+Units = æ‰‡åŒº of 1 * 512 = 512 bytes
 Sector size (logical/physical): 512 bytes / 512 bytes
 I/O size (minimum/optimal): 512 bytes / 512 bytes
 Disk identifier: 0x00004456
 
-           Éè±¸ Æô¶¯      Æğµã          ÖÕµã     ¿éÊı   Id  ÏµÍ³
+           è®¾å¤‡ å¯åŠ¨      èµ·ç‚¹          ç»ˆç‚¹     å—æ•°   Id  ç³»ç»Ÿ
 lubuntu12.04.raw1   *        2048   136718335    68358144   83  Linux
-lubuntu12.04.raw2       136720382   152342527     7811073    5  À©Õ¹
-lubuntu12.04.raw5       136720384   152342527     7811072   82  Linux ½»»» / Solaris
+lubuntu12.04.raw2       136720382   152342527     7811073    5  æ‰©å±•
+lubuntu12.04.raw5       136720384   152342527     7811072   82  Linux äº¤æ¢ / Solaris
 
-Ëã³öµÚ1¸öÖ÷·ÖÇøµÄoffset=2048*512=1048576
-Ëã³öµÚ2¸öÀ©Õ¹·ÖÇøµÄoffset=136720382*512             À©Õ¹·ÖÇøÃ»·¨¹ÒÔØ
-À©Õ¹·ÖÇøÀïÃæµÄµÚÒ»¸öÂß¼­·ÖÇøµÄoffset=136720384*512  µÚÒ»¸öÂß¼­·ÖÇøÊÇswap·ÖÇø£¬Ò²Ã»ÓĞ¹ÒÔØÒâÒå¡£
-ÆäËû·ÖÇøµÄoffset¼ÆËã·½·¨ÀàËÆ¡£
+ç®—å‡ºç¬¬1ä¸ªä¸»åˆ†åŒºçš„offset=2048*512=1048576
+ç®—å‡ºç¬¬2ä¸ªæ‰©å±•åˆ†åŒºçš„offset=136720382*512             æ‰©å±•åˆ†åŒºæ²¡æ³•æŒ‚è½½
+æ‰©å±•åˆ†åŒºé‡Œé¢çš„ç¬¬ä¸€ä¸ªé€»è¾‘åˆ†åŒºçš„offset=136720384*512  ç¬¬ä¸€ä¸ªé€»è¾‘åˆ†åŒºæ˜¯swapåˆ†åŒºï¼Œä¹Ÿæ²¡æœ‰æŒ‚è½½æ„ä¹‰ã€‚
+å…¶ä»–åˆ†åŒºçš„offsetè®¡ç®—æ–¹æ³•ç±»ä¼¼ã€‚
 
 
 5.2
-¹ÒÔØµÚÒ»¸öÖ÷·ÖÇø¡£
+æŒ‚è½½ç¬¬ä¸€ä¸ªä¸»åˆ†åŒºã€‚
 cd /home/myming
 mkdir rawmount
 mount -o loop,offset=1048576   ./lubuntu_10.17/lubuntu12.04.raw  ./rawmount
-cd rawmountÏÂÃæ¼´¿ÉÒÔ¶ÔµÚÒ»¸öÖ÷·ÖÇøÖĞµÄÄÚÈİ½øĞĞ¶ÁĞ´²Ù×÷¡£
-²Ù×÷Íê±ÏºóÀë¿ª¹ÒÔØµã²¢umount rawmount
+cd rawmountä¸‹é¢å³å¯ä»¥å¯¹ç¬¬ä¸€ä¸ªä¸»åˆ†åŒºä¸­çš„å†…å®¹è¿›è¡Œè¯»å†™æ“ä½œã€‚
+æ“ä½œå®Œæ¯•åç¦»å¼€æŒ‚è½½ç‚¹å¹¶umount rawmount
 
 
 
-6.lubuntuÍ¼ĞÎ½çÃæÏÂ×Ô¶¯µÇÂ¼ÌØ¶¨ÕË»§
-Æô¶¯lubuntu
+6.lubuntuå›¾å½¢ç•Œé¢ä¸‹è‡ªåŠ¨ç™»å½•ç‰¹å®šè´¦æˆ·
+å¯åŠ¨lubuntu
 cd /home/myming
 
 /usr/loacl/qemu_mym/qemu-system-i386   -hda  ./lubuntu_10.17/lubuntu12.04.raw   -boot c  -m 2048   -k en-us
 
 6.1
-ÒÔrootÕËºÅµÇÂ½lubuntu
-ĞŞ¸Ä
+ä»¥rootè´¦å·ç™»é™†lubuntu
+ä¿®æ”¹
 /etc/lxdm/default.conf   
-autologin=root #ÒªµÇÂ¼µÄÓÃ»§Ãû 
+autologin=root #è¦ç™»å½•çš„ç”¨æˆ·å 
 
 
 6.2
-ĞŞ¸Ä
+ä¿®æ”¹
 /etc/lightdm/lightdm.conf  
 [SeatDefaults]  
-autologin-user=root #ÒªµÇÂ¼µÄÓÃ»§Ãû 
+autologin-user=root #è¦ç™»å½•çš„ç”¨æˆ·å 
 autologin-user-timeout=0  
 greeter-session=lightdm-gtk-greeter  
 user-session=Lubuntu  
 
 
-7.lubuntuÍ¼ĞÎ½çÃæÏÂ£¬ÏµÍ³µÇÂ¼ºó×Ô¶¯Ö´ĞĞ³ÌĞò
+7.lubuntuå›¾å½¢ç•Œé¢ä¸‹ï¼Œç³»ç»Ÿç™»å½•åè‡ªåŠ¨æ‰§è¡Œç¨‹åº
 
 mkdir -p ~/.config/lxsession/Lubuntu/           
 
 touch ~/.config/lxsession/Lubuntu/autostart 
 
-±à¼­autostart
+ç¼–è¾‘autostart
 @/root/new/aaa.sh
 
 
 
-ÆäÖĞ@ºóÃæÊÇÒª×Ô¶¯Ö´ĞĞµÄ½Å±¾»òÕßÃüÁî
+å…¶ä¸­@åé¢æ˜¯è¦è‡ªåŠ¨æ‰§è¡Œçš„è„šæœ¬æˆ–è€…å‘½ä»¤
 
 
 /root/new/aaa.sh
-ÄÚÈİÈçÏÂ£º
+å†…å®¹å¦‚ä¸‹ï¼š
 #!/bin/bash
 echo "start" > /root/new/bbb.txt                         
 date >> /root/new/bbb.txt   
 sleep 10
-/usr/local/runScript -r /root/Documents/test.sikuli/     #Ö´ĞĞskuli                         
+/usr/local/runScript -r /root/Documents/test.sikuli/     #æ‰§è¡Œskuli                         
 echo "stop" >> /root/new/bbb.txt
-shutdown -h now                                      #×Ô¶¯¹Ø»ú    
+shutdown -h now                                      #è‡ªåŠ¨å…³æœº    
 
 
 
 8.
-Ê¹ÓÃrootÕËºÅµÇÂ½·şÎñÆ÷
+ä½¿ç”¨rootè´¦å·ç™»é™†æœåŠ¡å™¨
 cd /home/myming
 
 
@@ -144,52 +144,60 @@ ln -s /home/mying/lubuntu_10.17/  lubuntu
 10.
 cd /home/myming/git_tijiao/all_work_flow/prog
 
-ÔËĞĞ./test_init.sh³õÊ¼»¯»·¾³£¨Ö»ĞèÒªÔËĞĞÒ»´Î£©
-./test_clean.shÇå¿ÕÉÏ´ÎµÄ²âÊÔÓÃÀıºÍ²âÊÔ½á¹û
+è¿è¡Œ./test_init.shåˆå§‹åŒ–ç¯å¢ƒï¼ˆåªéœ€è¦è¿è¡Œä¸€æ¬¡ï¼‰
+./test_clean.shæ¸…ç©ºä¸Šæ¬¡çš„æµ‹è¯•ç”¨ä¾‹å’Œæµ‹è¯•ç»“æœ
 
 #==========================
 #3.
-#½«²âÊÔÓÃÀıxxxx.tar.gz¿½±´µ½test_caseÄ¿Â¼ÖĞ
+#å°†æµ‹è¯•ç”¨ä¾‹xxxx.tar.gzæ‹·è´åˆ°test_caseç›®å½•ä¸­
 #
 #4.
-#./start_all.sh ×Ô¶¯´¦ÀíËùÓĞÁ÷³Ì
+#./start_all.sh è‡ªåŠ¨å¤„ç†æ‰€æœ‰æµç¨‹
 #
 #5.
-#Éú³É½á¹û´æ·ÅÔÚ./test_caseÄ¿Â¼µ±ÖĞ¡£
+#ç”Ÿæˆç»“æœå­˜æ”¾åœ¨./test_caseç›®å½•å½“ä¸­ã€‚
 #
 #
-#ÖĞÍ¾Èç¹ûÏëÍ£Ö¹
-#./v_kill.sh ¹ØµôËùÓĞµÄ³ÌĞò
-#./v_clean.sh ÇåÀíÖĞ¼ä½á¹û£¬ÒÔ¼°×îºó½á¹û£¬Ö»±£Áô³ÌĞò´úÂë¡£
+#ä¸­é€”å¦‚æœæƒ³åœæ­¢
+#./v_kill.sh å…³æ‰æ‰€æœ‰çš„ç¨‹åº
+#./v_clean.sh æ¸…ç†ä¸­é—´ç»“æœï¼Œä»¥åŠæœ€åç»“æœï¼Œåªä¿ç•™ç¨‹åºä»£ç ã€‚
 #==========================================
-ÖÁ´Ë124.16.141.162»úÆ÷ÉÏµÄÖ¸ÁîÆµ¶ÈµÄ²¿ÊğÒÑ¾­Íê³É¡£
+è‡³æ­¤124.16.141.162æœºå™¨ä¸Šçš„æŒ‡ä»¤é¢‘åº¦çš„éƒ¨ç½²å·²ç»å®Œæˆã€‚
 
 
-¶ş¡¢web·şÎñÆ÷¶Ë²¿Êğ
+äºŒã€webæœåŠ¡å™¨ç«¯éƒ¨ç½²
 1.
-½«/home/myming/qemu-instru-tracer/deploy_help_doc/web_test_prog/remote.sh
-¿½±´µ½
-124.16.141.184»úÆ÷ÉÏµÄ/home/myming/Ä¿Â¼ÏÂ¡£
+å°†/home/myming/qemu-instru-tracer/deploy_help_doc/web_test_prog/remote.sh
+æ‹·è´åˆ°
+124.16.141.184æœºå™¨ä¸Šçš„/home/myming/ç›®å½•ä¸‹ã€‚
 
 2.
-ÅäÖÃweb·şÎñÆ÷£¨124.16.141.184£©ºÍÔËĞĞQEMUµÄ·şÎñÆ÷£¨124.16.141.184£©¿ÉÒÔÏà»¥ÎŞÃÜÂëssh rootµÇÂ¼¡£
+é…ç½®webæœåŠ¡å™¨ï¼ˆ124.16.141.184ï¼‰å’Œè¿è¡ŒQEMUçš„æœåŠ¡å™¨ï¼ˆ124.16.141.162ï¼‰å¯ä»¥ç›¸äº’æ— å¯†ç ssh rootç™»å½•ã€‚
+åœ¨124.16.141.184ä¸Š
+ssh-keygen â€“t rsa
+ä¸€è·¯å›è½¦
+ssh-copy-id  â€“i  ~/.ssh/id_rsa.pub root@124.16.141.162
 
+åœ¨124.16.141.162
+ssh-keygen â€“t rsa
+ä¸€è·¯å›è½¦
+ssh-copy-id  â€“i  ~/.ssh/id_rsa.pub root@124.16.141.184
 
-Èı¡¢¿ªÊ¼²âÊÔ
+ä¸‰ã€å¼€å§‹æµ‹è¯•
 1.
-ÔÚä¯ÀÀÆ÷ÖĞÊäÈëÒÔÏÂµØÖ·
+åœ¨æµè§ˆå™¨ä¸­è¾“å…¥ä»¥ä¸‹åœ°å€
 http://124.16.141.184/lxr/import
 
 2.
-Ñ¡Ôñ
-version£ºlinux-3.5.4  paltform:x86_32  testcase directory:testcase2 
-µ¥»÷change°´Å¥
-Ñ¡ÔñÎÄ¼ş£º
-ÕâÀïÓĞÒ»¸ö×¼±¸ºÃµÄ²âÊÔÓÃÀı£¨²âÊÔÓÃÀıµÄÖÆ×÷·½·¨¼ûsikuliÊ¹ÓÃÎÄµµ£©
+é€‰æ‹©
+versionï¼šlinux-3.5.4  paltform:x86_32  testcase directory:testcase2 
+å•å‡»changeæŒ‰é’®
+é€‰æ‹©æ–‡ä»¶ï¼š
+è¿™é‡Œæœ‰ä¸€ä¸ªå‡†å¤‡å¥½çš„æµ‹è¯•ç”¨ä¾‹ï¼ˆæµ‹è¯•ç”¨ä¾‹çš„åˆ¶ä½œæ–¹æ³•è§sikuliä½¿ç”¨æ–‡æ¡£ï¼‰
 /home/myming/qemu-instru-tracer/deploy_help_doc/all_work_flow/test-music.sikuli.tar.gz
-µ¥»÷UploadFlie
-ÎÄ¼şÉÏ´«³É¹¦ºó
-µ¥»÷Excute Test Script°´Å¥¼´¿ÉÖ´ĞĞ²âÊÔÓÃÀı¡£
+å•å‡»UploadFlie
+æ–‡ä»¶ä¸Šä¼ æˆåŠŸå
+å•å‡»Excute Test ScriptæŒ‰é’®å³å¯æ‰§è¡Œæµ‹è¯•ç”¨ä¾‹ã€‚
 
 3.
-²âÊÔÍê³Éºówebä¯ÀÀÆ÷»áÏÔÊ¾²âÊÔ½á¹û¡£
+æµ‹è¯•å®Œæˆåwebæµè§ˆå™¨ä¼šæ˜¾ç¤ºæµ‹è¯•ç»“æœã€‚
