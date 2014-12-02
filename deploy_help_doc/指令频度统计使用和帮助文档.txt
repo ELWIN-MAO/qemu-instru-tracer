@@ -130,7 +130,7 @@ myming@ubuntu-xyong:~$ ls
 qemu-instru-tracer
 
 9.
-ln -s  qemu-instru-tracer/deploy_help_doc/all_work_flow/   git_tijiao
+ln -s  qemu-instru-tracer/deploy_help_doc/   git_tijiao
 
 
 myming@ubuntu-xyong:~$ cd git_tijiao/all_work_flow/
