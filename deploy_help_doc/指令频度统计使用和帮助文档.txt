@@ -16,6 +16,10 @@ lubuntu12.04.vmdk
 cd /home/myming
 git clone https://github.com/xyongcn/qemu-instru-tracer
 
+安装编译qemu依赖的软件包
+apt-get install zlib1g-dev       libglib2.0-dev    libpixman-1-dev   autoconf   libtool  flex  bison     libsdl1.2-dev    libx11-dev
+
+安装qemu
 cd ./qemu-instru-tracer
 ./configure --target-list=i386-softmmu --prefix=/usr/local/qemu_mym  && make && make install
 会安装QEMU到/usr/loacl/qemu_mym/目录下面
