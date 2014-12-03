@@ -1,12 +1,15 @@
                                                      指令频度统计使用和帮助文档
 一、服务器端部署                                                         
+系统要求：
+用于指令频度分析的操作系统是：32位的lubuntu12.04
+
 1.制作虚拟磁盘并安装系统
   由于qemu从一个空的虚拟磁盘开始安装系统十分缓慢，没法接受，所以选择用vmware虚拟机安装操作系统，生成lubuntu12.04.vmdk这样的虚拟磁盘。
 2.将*.vmdk上传到124.16.141.162服务器
 myming@ubuntu-xyong:~$ pwd
 /home/myming
 
-myming@ubuntu-xyong:~$ ls lubuntu_10.17/
+myming@ubuntu-xyong:~$ ls lubuntu_12.04/
 lubuntu12.04.vmdk
 
 3. 
@@ -20,23 +23,23 @@ cd ./qemu-instru-tracer
 myming@ubuntu-xyong:~$ pwd
 /home/myming
 
-运行/usr/loacl/qemu_mym/qemu-system-i386   -hda  ./lubuntu_10.17/lubuntu12.04.vmdk   -boot c  -m 2048   -k en-us  -d exec,in_asm -D ./log-zml.txt
+运行/usr/loacl/qemu_mym/qemu-system-i386   -hda  ./lubuntu_12.04/lubuntu12.04.vmdk   -boot c  -m 2048   -k en-us  -d exec,in_asm -D ./log-zml.txt
 这样的命令即可以使用vmdk虚拟机。
 
 3. 转换vmdk到raw格式
 由于vmdk格式的虚拟磁盘不能直接在host中挂载读写，所以需要将vmdk转换为raw格式。
-cd /home/myming/lubuntu_10.17
+cd /home/myming/lubuntu_12.04
 
 /usr/loacl/qemu_mym/qemu-img convert -f vmdk -O raw  lubuntu12.04.vmdk lubuntu12.04.raw
 
 4.使用raw格式的磁盘
 cd /home/myming
-/usr/loacl/qemu_mym/qemu-system-i386   -hda  ./lubuntu_10.17/lubuntu12.04.raw   -boot c  -m 2048   -k en-us  -d exec,in_asm -D ./log-zml.txt
+/usr/loacl/qemu_mym/qemu-system-i386   -hda  ./lubuntu_12.04/lubuntu12.04.raw   -boot c  -m 2048   -k en-us  -d exec,in_asm -D ./log-zml.txt
  
 5.挂载读写raw格式的磁盘
 
 5.1
-cd /home/myming/lubuntu_10.17
+cd /home/myming/lubuntu_12.04
 
 fdisk  -l lubuntu12.04.raw
 
@@ -62,7 +65,7 @@ lubuntu12.04.raw5       136720384   152342527     7811072   82  Linux 交换 / S
 挂载第一个主分区。
 cd /home/myming
 mkdir rawmount
-mount -o loop,offset=1048576   ./lubuntu_10.17/lubuntu12.04.raw  ./rawmount
+mount -o loop,offset=1048576   ./lubuntu_12.04/lubuntu12.04.raw  ./rawmount
 cd rawmount下面即可以对第一个主分区中的内容进行读写操作。
 操作完毕后离开挂载点并umount rawmount
 
@@ -72,7 +75,7 @@ cd rawmount下面即可以对第一个主分区中的内容进行读写操作。
 启动lubuntu
 cd /home/myming
 
-/usr/loacl/qemu_mym/qemu-system-i386   -hda  ./lubuntu_10.17/lubuntu12.04.raw   -boot c  -m 2048   -k en-us
+/usr/loacl/qemu_mym/qemu-system-i386   -hda  ./lubuntu_12.04/lubuntu12.04.raw   -boot c  -m 2048   -k en-us
 
 6.1
 以root账号登陆lubuntu
@@ -138,7 +141,7 @@ myming@ubuntu-xyong:~$ cd git_tijiao/all_work_flow/
 myming@ubuntu-xyong:~/git_tijiao/all_work_flow$ pwd
 /home/myming/git_tijiao/all_work_flow
 
-ln -s /home/mying/lubuntu_10.17/  lubuntu
+ln -s /home/mying/lubuntu_12.04/  lubuntu
 
 
 10.
