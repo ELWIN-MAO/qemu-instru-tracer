@@ -1,15 +1,25 @@
-                                                     指令频度统计使用和帮助文档
-一、服务器端部署                                                         
-系统要求：
-用于指令频度分析的操作系统是：32位的lubuntu12.04
+﻿                                                     指令频度统计使用和帮助文档
+涉及到的机器：
+web服务器：124.16.141.184  
+功能：测试用例通过web上传，自动执行测试用例，展示测试结果
 
-1.制作虚拟磁盘并安装系统
+指令频度统计服务器：124.16.141.162
+功能：运行QEMU模拟器，跟踪lubuntu12.04_x86_32系统，生成日志文件，并对日志文件进行统计处理，得到按线程统计的
+指令频度和总的指令频度。
+
+日志处理程序是完全用python和shell脚本编写的，需要检查124.16.141.162是否安装了python解释器。
+
+
+一、服务器端部署                                                         
+
+1.制作虚拟磁盘并安装系统(目前32位的lubuntu12.04能很好的在图形界面下工作，请使用这个版本的系统)
   由于qemu从一个空的虚拟磁盘开始安装系统十分缓慢，没法接受，所以选择用vmware虚拟机安装操作系统，生成lubuntu12.04.vmdk这样的虚拟磁盘。
 2.将*.vmdk上传到124.16.141.162服务器
 myming@ubuntu-xyong:~$ pwd
 /home/myming
 
-myming@ubuntu-xyong:~$ ls lubuntu_12.04/
+
+myming@ubuntu-xyong:~$ ls lubuntu/
 lubuntu12.04.vmdk
 
 3. 
@@ -27,23 +37,23 @@ cd ./qemu-instru-tracer
 myming@ubuntu-xyong:~$ pwd
 /home/myming
 
-运行/usr/loacl/qemu_mym/qemu-system-i386   -hda  ./lubuntu_12.04/lubuntu12.04.vmdk   -boot c  -m 2048   -k en-us  -d exec,in_asm -D ./log-zml.txt
+运行/usr/loacl/qemu_mym/qemu-system-i386   -hda  ./lubuntu/lubuntu12.04.vmdk   -boot c  -m 2048   -k en-us  -d exec,in_asm -D ./log-zml.txt
 这样的命令即可以使用vmdk虚拟机。
 
 3. 转换vmdk到raw格式
 由于vmdk格式的虚拟磁盘不能直接在host中挂载读写，所以需要将vmdk转换为raw格式。
-cd /home/myming/lubuntu_12.04
+cd /home/myming/lubuntu
 
 /usr/loacl/qemu_mym/qemu-img convert -f vmdk -O raw  lubuntu12.04.vmdk lubuntu12.04.raw
 
 4.使用raw格式的磁盘
 cd /home/myming
-/usr/loacl/qemu_mym/qemu-system-i386   -hda  ./lubuntu_12.04/lubuntu12.04.raw   -boot c  -m 2048   -k en-us  -d exec,in_asm -D ./log-zml.txt
+/usr/loacl/qemu_mym/qemu-system-i386   -hda  ./lubuntu/lubuntu12.04.raw   -boot c  -m 2048   -k en-us  -d exec,in_asm -D ./log-zml.txt
  
 5.挂载读写raw格式的磁盘
 
 5.1
-cd /home/myming/lubuntu_12.04
+cd /home/myming/lubuntu
 
 fdisk  -l lubuntu12.04.raw
 
@@ -69,7 +79,7 @@ lubuntu12.04.raw5       136720384   152342527     7811072   82  Linux 交换 / S
 挂载第一个主分区。
 cd /home/myming
 mkdir rawmount
-mount -o loop,offset=1048576   ./lubuntu_12.04/lubuntu12.04.raw  ./rawmount
+mount -o loop,offset=1048576   ./lubuntu/lubuntu12.04.raw  ./rawmount
 cd rawmount下面即可以对第一个主分区中的内容进行读写操作。
 操作完毕后离开挂载点并umount rawmount
 
@@ -79,7 +89,7 @@ cd rawmount下面即可以对第一个主分区中的内容进行读写操作。
 启动lubuntu
 cd /home/myming
 
-/usr/loacl/qemu_mym/qemu-system-i386   -hda  ./lubuntu_12.04/lubuntu12.04.raw   -boot c  -m 2048   -k en-us
+/usr/loacl/qemu_mym/qemu-system-i386   -hda  ./lubuntu/lubuntu12.04.raw   -boot c  -m 2048   -k en-us
 
 6.1
 以root账号登陆lubuntu
@@ -142,8 +152,7 @@ myming@ubuntu-xyong:~$ cd /home/myming/qemu-instru-tracer/deploy_help_doc/all_wo
 myming@ubuntu-xyong:~/git_tijiao/all_work_flow$ pwd
 /home/myming/qemu-instru-tracer/deploy_help_doc/all_work_flow
 
-
-ln -s /home/mying/lubuntu_12.04/  lubuntu
+mv /home/mying/lubuntu  .
 
 
 10.
@@ -172,9 +181,11 @@ cd /home/myming/qemu-instru-tracer/deploy_help_doc/all_work_flow/prog
 
 二、web服务器端部署
 1.
-将/home/myming/qemu-instru-tracer/deploy_help_doc/web_test_prog/remote.sh
-拷贝到
-124.16.141.184机器上的/home/myming/目录下。
+需要在124.16.141.184机器上部署好web服务器，此服务器用于测试用例的上传
+部署方法见：https://github.com/xyongcn/testcase_upload这个仓库
+
+124.16.141.184机器上的/home/myming/remote.sh这个文件会自动通过ssh执行124.16.141.184上的hook.sh脚本。
+
 
 2.
 配置web服务器（124.16.141.184）和运行QEMU的服务器（124.16.141.162）可以相互无密码ssh root登录。
@@ -191,7 +202,7 @@ ssh-copy-id  –i  ~/.ssh/id_rsa.pub root@124.16.141.184
 三、开始测试
 1.
 在浏览器中输入以下地址
-http://124.16.141.184/lxr/import
+http://124.16.141.184:8080/UploadPage.jsp
 
 2.
 选择
