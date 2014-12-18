@@ -7,10 +7,23 @@ web服务器：124.16.141.184
 功能：运行QEMU模拟器，跟踪lubuntu12.04_x86_32系统，生成日志文件，并对日志文件进行统计处理，得到按线程统计的
 指令频度和总的指令频度。
 
+windowsPC:
+安装vmware软件，用vmware安装lubuntu21.04操作系统形成成lubuntu12.04.vmdk这样的虚拟磁盘
+
+
 日志处理程序是完全用python和shell脚本编写的，需要检查124.16.141.162是否安装了python解释器。
 
 
-一、指令频度统计服务器端部署                                                         
+一、制作lubuntu12.04_32磁盘镜像（在windowsPC上面进行）
+  (目前32位的lubuntu12.04能很好的在图形界面下工作，请使用这个版本的系统)
+  lubuntu-12.04-desktop-i386.iso下载地址
+  http://cdimage.ubuntu.com/lubuntu/releases/12.04/release/lubuntu-12.04-desktop-i386.iso
+  由于qemu从一个空的虚拟磁盘开始安装系统十分缓慢，没法接受，所以选择用vmware虚拟机安装操作系统，生成lubuntu12.04.vmdk
+  lubuntu12.04-s001.vmdk,lubuntu12.04-s002.vmdk,lubuntu12.04-s003.vmdk
+  这样的虚拟磁盘。或者只有一个lubuntu12.04.vmdk文件
+
+
+二、指令频度统计服务器端部署                                                         
 
 这台机器上的所有操作都是用root账号进行的，原因是mount命令需要root权限，而且进入虚拟磁盘也是需要root权限的。
 再有默认都是在/home/myming目录下面工作的。如果不存在/home/myming这个目录可以用root账号登陆
@@ -24,12 +37,7 @@ mkdir /home/myming
 部署经验：注意一步一步来，进行下一步前一定要check上一步的结果是否正常work。
 
 
-1.制作虚拟磁盘并安装系统(目前32位的lubuntu12.04能很好的在图形界面下工作，请使用这个版本的系统)
-  lubuntu-12.04-desktop-i386.iso下载地址
-  http://cdimage.ubuntu.com/lubuntu/releases/12.04/release/lubuntu-12.04-desktop-i386.iso
-  由于qemu从一个空的虚拟磁盘开始安装系统十分缓慢，没法接受，所以选择用vmware虚拟机安装操作系统，生成lubuntu12.04.vmdk
-  lubuntu12.04-s001.vmdk,lubuntu12.04-s002.vmdk,lubuntu12.04-s003.vmdk
-  这样的虚拟磁盘。或者只有一个lubuntu12.04.vmdk文件
+
 2.将*.vmdk上传到124.16.141.162服务器
 myming@ubuntu-xyong:~$ pwd
 /home/myming
@@ -200,7 +208,7 @@ cd /home/myming/qemu-instru-tracer/deploy_help_doc/all_work_flow/prog
 至此124.16.141.162机器上的指令频度的部署已经完成。
 
 
-二、web服务器端部署
+三、web服务器端部署
 1.
 需要在124.16.141.184机器上部署好web服务器，此服务器用于测试用例的上传
 部署方法见：https://github.com/xyongcn/testcase_upload这个仓库
@@ -220,7 +228,7 @@ ssh-keygen –t rsa
 一路回车
 ssh-copy-id  –i  ~/.ssh/id_rsa.pub root@124.16.141.184
 
-三、开始测试
+四、开始测试
 1.
 在浏览器中输入以下地址
 http://124.16.141.184:8080/UploadPage.jsp
