@@ -25,6 +25,7 @@ windowsPC:
 
 二、指令频度统计服务器端部署                                                         
 
+1.
 这台机器上的所有操作都是用root账号进行的，原因是mount命令需要root权限，而且进入虚拟磁盘也是需要root权限的。
 再有默认都是在/home/myming目录下面工作的。如果不存在/home/myming这个目录可以用root账号登陆
 mkdir /home/myming
