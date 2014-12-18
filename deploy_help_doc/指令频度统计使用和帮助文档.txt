@@ -25,7 +25,11 @@ mkdir /home/myming
 
 
 1.制作虚拟磁盘并安装系统(目前32位的lubuntu12.04能很好的在图形界面下工作，请使用这个版本的系统)
-  由于qemu从一个空的虚拟磁盘开始安装系统十分缓慢，没法接受，所以选择用vmware虚拟机安装操作系统，生成lubuntu12.04.vmdk这样的虚拟磁盘。
+  lubuntu-12.04-desktop-i386.iso下载地址
+  http://cdimage.ubuntu.com/lubuntu/releases/12.04/release/lubuntu-12.04-desktop-i386.iso
+  由于qemu从一个空的虚拟磁盘开始安装系统十分缓慢，没法接受，所以选择用vmware虚拟机安装操作系统，生成lubuntu12.04.vmdk
+  lubuntu12.04-s001.vmdk,lubuntu12.04-s002.vmdk,lubuntu12.04-s003.vmdk
+  这样的虚拟磁盘。或者只有一个lubuntu12.04.vmdk文件
 2.将*.vmdk上传到124.16.141.162服务器
 myming@ubuntu-xyong:~$ pwd
 /home/myming
@@ -33,8 +37,13 @@ myming@ubuntu-xyong:~$ pwd
 
 myming@ubuntu-xyong:~$ ls lubuntu/
 lubuntu12.04.vmdk
+lubuntu12.04-s001.vmdk
+lubuntu12.04-s002.vmdk
+.....
+
 
 3. 
+apt-get install git (如何没有安装git)
 cd /home/myming
 git clone https://github.com/xyongcn/qemu-instru-tracer
 
