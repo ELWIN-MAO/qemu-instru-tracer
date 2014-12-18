@@ -1,4 +1,4 @@
-﻿                                                     指令频度统计使用和帮助文档
+                                               指令频度统计使用和帮助文档
 涉及到的机器：
 web服务器：124.16.141.184  
 系统：ubuntu-server12.04-64位
@@ -17,12 +17,13 @@ windowsPC:
 
 
 一、制作lubuntu12.04_32磁盘镜像（在windowsPC上面进行）
-  (目前32位的lubuntu12.04能很好的在图形界面下工作，请使用这个版本的系统)
+  (目前32位的lubuntu12.04能很好的在图形界面下工作，请使用这个版本的系统,安装时选择安装语言为英文)
   lubuntu-12.04-desktop-i386.iso下载地址
   http://cdimage.ubuntu.com/lubuntu/releases/12.04/release/lubuntu-12.04-desktop-i386.iso
   由于qemu从一个空的虚拟磁盘开始安装系统十分缓慢，没法接受，所以选择用vmware虚拟机安装操作系统，生成lubuntu12.04.vmdk
   lubuntu12.04-s001.vmdk,lubuntu12.04-s002.vmdk,lubuntu12.04-s003.vmdk
   这样的虚拟磁盘。或者只有一个lubuntu12.04.vmdk文件
+  
 
 
 二、指令频度统计服务器端部署                                                         
@@ -111,9 +112,12 @@ lubuntu12.04.raw5       136720384   152342527     7811072   82  Linux 交换 / S
 挂载第一个主分区。
 cd /home/myming
 mkdir rawmount
-mount -o loop,offset=1048576   ./lubuntu/lubuntu12.04.raw  ./rawmount
-cd rawmount下面即可以对第一个主分区中的内容进行读写操作。
-操作完毕后离开挂载点并umount rawmount
+mount -o loop,offset=1048576   ./lubuntu/lubuntu12.04.raw  ./rawmount #其中的offset=1048576的值是
+通过5.1中2048*512=1048576这样计算出来的，请替换成你的具体值。
+cd rawmount     #即可以对第一个主分区中的内容进行读写操作。
+.....
+cd /home/myming #操作完毕后离开挂载点
+umount rawmount #卸载虚拟磁盘
 
 
 
@@ -156,12 +160,8 @@ touch ~/.config/lxsession/Lubuntu/autostart
 
 /root/new/aaa.sh
 内容如下：
-#!/bin/bash
-echo "start" > /root/new/bbb.txt                         
-date >> /root/new/bbb.txt   
-sleep 10
+#!/bin/bash                      
 /usr/local/runScript -r /root/Documents/test.sikuli/     #执行skuli                         
-echo "stop" >> /root/new/bbb.txt
 shutdown -h now                                      #自动关机    
 
 
@@ -181,7 +181,8 @@ qemu-instru-tracer
 9.
 myming@ubuntu-xyong:~$ cd /home/myming/qemu-instru-tracer/deploy_help_doc/all_work_flow
 
-myming@ubuntu-xyong:~/git_tijiao/all_work_flow$ pwd
+$ pwd
+
 /home/myming/qemu-instru-tracer/deploy_help_doc/all_work_flow
 
 mv /home/mying/lubuntu  .
