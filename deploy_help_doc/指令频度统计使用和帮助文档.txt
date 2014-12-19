@@ -13,7 +13,8 @@ windowsPC:
 安装vmware软件，用vmware安装lubuntu21.04操作系统形成成lubuntu12.04.vmdk这样的虚拟磁盘
 
 
-日志处理程序是完全用python和shell脚本编写的，需要检查124.16.141.162是否安装了python解释器。
+
+日志处理程序是用python和shell脚本编写的，需要检查124.16.141.162是否安装了python解释器。
 
 
 一、制作lubuntu12.04_32磁盘镜像（在windowsPC上面进行）
@@ -30,15 +31,21 @@ windowsPC:
 
 1.
 这台机器上的所有操作都是用root账号进行的，原因是mount命令需要root权限，而且进入虚拟磁盘也是需要root权限的。
-再有默认都是在/home/myming目录下面工作的。如果不存在/home/myming这个目录可以用root账号登陆
-mkdir /home/myming
-由于使用了ssh来回传输文件之类的所以把目录都写死了，第一次复现结果不推荐在别的目录下面进行，等成功复现结果了以后，可以考虑将qemu-instru-tracer
-移动到任意你想移动的目录，脚本程序中大部分都是使用的相对路径，需要修改的是hook.sh中的有关myming的变量。
+再有默认都是在/home/myming目录下面工作的
+也可可以在别的目录下面工作例如/A/B/C
 
-还需要修改hook.sh和web服务器中的remote.sh中的ip地址为实际部署情况的ip地址。
+此时需要修改
+qemu-instru-tracer/deploy_help_doc/all_work_flow/prog/hook.sh中的
+
+cd /mnt/freenas-intel/qemu-instru-tracer/deploy_help_doc/all_work_flow/prog           #修改/mnt/freenas-inte/为  /A/B/C
+scp -r  root@192.168.1.37:/usr/local/share/cg-rtl/testcase/testcase2/*  ./test_case   #修ip地址为web服务器的ip地址
+ssh root@192.168.1.37 "rm -rf /usr/local/share/cg-rtl/testcase/testcase2/*"           #修ip地址为web服务器的ip地址
+./start_all.sh
+scp -r ./test_result/*  root@192.168.1.37:/usr/local/apache-tomcat-7.0.57/webapps/ROOT/mym_test #修ip地址为web服务器的ip地址
+rm -rf ./test_result/*
 
 
-部署经验：注意一步一步来，进行下一步前一定要check上一步的结果是否正常work。
+
 
 
 
@@ -217,7 +224,7 @@ cd /home/myming/qemu-instru-tracer/deploy_help_doc/all_work_flow/prog
 需要在124.16.141.184机器上部署好web服务器，此服务器用于测试用例的上传
 部署方法见：https://github.com/xyongcn/testcase_upload这个仓库
 
-124.16.141.184机器上的/home/myming/remote.sh这个文件会自动通过ssh执行124.16.141.184上的hook.sh脚本。
+124.16.141.184机器上的/usr/local/apache-tomcat-7.0.57/webapps/ROOT/remote.sh这个文件会自动通过ssh执行124.16.141.184上的hook.sh脚本。
 
 
 2.
@@ -235,7 +242,7 @@ ssh-copy-id  –i  ~/.ssh/id_rsa.pub root@124.16.141.184
 四、开始测试
 1.
 在浏览器中输入以下地址
-http://124.16.141.184:8080/UploadPage.jsp
+http://124.16.141.184:8080/UploadPage.jsp  #ip地址需要替换为web服务器的具体地址
 
 2.
 选择
