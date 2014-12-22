@@ -77,7 +77,7 @@ cd ./qemu-instru-tracer
 myming@ubuntu-xyong:~$ pwd
 /home/myming
 
-运行/usr/loacl/qemu_mym/qemu-system-i386   -hda  ./lubuntu/lubuntu12.04.vmdk   -boot c  -m 2048   -k en-us  -d exec,in_asm -D ./log-zml.txt
+运行/usr/loacl/qemu_mym/qemu-system-i386   -hda  ./lubuntu/lubuntu12.04.vmdk   -boot c  -m 2048   -k en-us 
 这样的命令即可以使用vmdk虚拟机。
 
 3. 转换vmdk到raw格式
@@ -88,7 +88,7 @@ cd /home/myming/lubuntu
 
 4.使用raw格式的磁盘
 cd /home/myming
-/usr/loacl/qemu_mym/qemu-system-i386   -hda  ./lubuntu/lubuntu12.04.raw   -boot c  -m 2048   -k en-us  -d exec,in_asm -D ./log-zml.txt
+/usr/loacl/qemu_mym/qemu-system-i386   -hda  ./lubuntu/lubuntu12.04.raw   -boot c  -m 2048   -k en-us
  
 5.挂载读写raw格式的磁盘
 
