@@ -7,8 +7,8 @@
 #/usr/local/qemu_mym/bin/qemu-system-i386   -hda  ../lubuntu/lubuntu12.04.raw   -boot c  -m 1024  -rtc clock=rt
 #/usr/local/qemu_mym/bin/qemu-system-i386   -hda  ../lubuntu/lubuntu12.04.raw   -boot c  -m 1024  -rtc clock=vm -icount shift=1,align=off
 #/usr/local/qemu_mym/bin/qemu-system-i386   -hda  ../lubuntu/lubuntu12.04.raw   -boot c  -m 1024  -rtc clock=vm -icount shift=4,align=off
-#/usr/local/qemu_mym/bin/qemu-system-i386   -hda  ../lubuntu/lubuntu12.04.raw   -boot c  -m 1024  -rtc clock=vm -icount shift=7,align=off
-/usr/local/qemu_mym/bin/qemu-system-i386   -hda  ../lubuntu/lubuntu12.04.raw   -boot c  -m 1024  -rtc clock=vm -icount shift=14,align=off
+/usr/local/qemu_mym/bin/qemu-system-i386   -hda  ../lubuntu/lubuntu12.04.raw   -boot c  -m 1024  -rtc clock=vm -icount shift=7,align=off
+#/usr/local/qemu_mym/bin/qemu-system-i386   -hda  ../lubuntu/lubuntu12.04.raw   -boot c  -m 1024  -rtc clock=vm -icount shift=14,align=off
 
 
 #/usr/local/qemu_mym/bin/qemu-system-i386   -hda  ../lubuntu/lubuntu12.04.raw   -boot c  -m 1024  -rtc clock=host                         -d  in_asm,exec -D /mnt/freenas-intel/log.log 

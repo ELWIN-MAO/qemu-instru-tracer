@@ -13,6 +13,10 @@ windowsPC:
 安装vmware软件，用vmware安装lubuntu21.04操作系统形成成lubuntu12.04.vmdk这样的虚拟磁盘
 
 
+指令频度测试对象：lubuntu12.04_x86_32
+功能：其中会安装sikuli，sikuli是用来使得lubuntu12.04自动执行测试用例的。
+
+
 
 日志处理程序是用python和shell脚本编写的，需要检查124.16.141.162是否安装了python解释器。
 
@@ -140,7 +144,7 @@ umount rawmount #卸载虚拟磁盘
 
 
 
-6.lubuntu图形界面下自动登录特定账户
+6.lubuntu图形界面下自动登录特定账户(修改的是lubuntu12.04_x86_32中的文件)
 启动lubuntu
 cd /home/myming
 
@@ -149,13 +153,13 @@ cd /home/myming
 6.1
 以root账号登陆lubuntu
 修改
-/etc/lxdm/default.conf   
+/etc/lxdm/default.conf中
 autologin=root #要登录的用户名 
 
 
 6.2
 修改
-/etc/lightdm/lightdm.conf  
+/etc/lightdm/lightdm.conf中
 [SeatDefaults]  
 autologin-user=root #要登录的用户名 
 autologin-user-timeout=0  
@@ -163,7 +167,7 @@ greeter-session=lightdm-gtk-greeter
 user-session=Lubuntu  
 
 
-7.lubuntu图形界面下，系统登录后自动执行程序
+6.3.lubuntu图形界面下，系统登录后自动执行程序(修改的是lubuntu12.04_x86_32中的文件)
 
 mkdir -p ~/.config/lxsession/Lubuntu/           
 
@@ -183,6 +187,12 @@ touch ~/.config/lxsession/Lubuntu/autostart
 /usr/local/runScript -r /root/Documents/test.sikuli/     #执行skuli                         
 shutdown -h now                                      #自动关机    
 
+
+7.安装sikuli执行自动化测试
+sikuli安装方法见：
+https://github.com/xyongcn/qemu-instru-tracer/blob/master/sikulitest/README.md
+完成安装sikuli以后
+在lubuntu中运行shutdown -h now 关闭机器
 
 
 8.
@@ -204,7 +214,7 @@ $ pwd
 
 /home/myming/qemu-instru-tracer/deploy_help_doc/all_work_flow
 
-mv /home/mying/lubuntu  .
+mv /home/myming/lubuntu  .
 
 
 10.
@@ -213,6 +223,8 @@ cd /home/myming/qemu-instru-tracer/deploy_help_doc/all_work_flow/prog
 运行./test_init.sh初始化环境（只需要运行一次）
 ./test_clean.sh清空上次的测试用例和测试结果
 
+
+################################  #号注释的目前没有用处
 #==========================
 #3.
 #将测试用例xxxx.tar.gz拷贝到test_case目录中
