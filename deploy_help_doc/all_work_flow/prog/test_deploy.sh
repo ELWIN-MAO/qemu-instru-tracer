@@ -23,7 +23,7 @@ chmod +x ./aaa.sh
 umount ./rawmount
 ##mount  ./cesh.img ./rawmount   #should be run as root
 mount ../lubuntu/lubuntu12.04.raw  -o loop,offset=1048576 ./rawmount/
-sleep 5
+sleep 10
 #mov aaa.sh to lubuntu 
 mv ./aaa.sh ./rawmount/root/new/
 
@@ -33,10 +33,10 @@ mkdir  ./test_result/${tstcs}  #show which result to get
 rm -rf ./rawmount/root/Documents/${tstcs}  #clear the dir which has the same name 
 mv ./test_case/${tstcs}  ./rawmount/root/Documents
 
-sleep 5
+sleep  10
 umount  ./rawmount
 
-sleep 5
+sleep  10
 
 echo "$(date "+%Y.%m.%d.%H.%M") test_deploy finish"
 

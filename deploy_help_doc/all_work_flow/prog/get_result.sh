@@ -13,11 +13,11 @@ umount ./rawmount
 ##mount  ./cesh.img ./rawmount   #should be run as root
 mount ../lubuntu/lubuntu12.04.raw  -o loop,offset=1048576 ./rawmount/
 
-sleep 5
+sleep 10
 
 mv ./rawmount/root/Documents/${tstrlt}  ./test_result/  
 
-sleep 5
+sleep 10
 
 umount ./rawmount
 

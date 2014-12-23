@@ -6,6 +6,6 @@ mkdir ./test_case
 mkdir ./test_result
 
 umount ./rawmount
-sleep 5
+sleep  10
 rmdir ./rawmount
 mkdir ./rawmount
