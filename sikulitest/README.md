@@ -1,6 +1,7 @@
 ## sikuli自动测试脚本 ##
 **sikuli** 是一种自动化测试的软件，此文件夹中包含测试脚本以及脚本运行时调用的文件等。
 ### 一.sikuli软件的安装###
+请以root账号登录lubuntu进行以下操作
 在安装sikuli软件之前，首先要安装opencv、tesseract和java。
 
  1. 安装opencv
@@ -10,7 +11,8 @@
  3. 安装java6
  4. 安装Sikuli
   - 下载网址：https://launchpad.net/sikuli/+download
-   - cp /home/**/Downloads/sikuli-setup.jar /usr/local
+   - cp sikuli-setup.jar /usr/local
+   - cd  /usr/local
    - java -jar sikuli-setop.jar
     
 	注：安装完成后查看当前文件夹下的SikuliX-1.0.1-SetupLog.txt文件中是否有报错。若有报错，则将/usr/lib下的libopencv_core.so.2.4.9 libopencv_highgui.so.2.4.9 libopencv_imgproc.so.2.4.9拷贝到/usr/local/lib文件夹下，并建立软链接，libopencv_core.so.2.4 libopencv_higugui.so.2.4 libopencv_imgproc.so.2.4。若/usr/lib文件夹下也没有这三个文件，则在/usr/local/opencv-2.4.9文件夹下查找，找到此三个文件后分别复制到/usr/lib和/usr/local/lib文件夹下，并建立软链接。然后在命令行中输入
