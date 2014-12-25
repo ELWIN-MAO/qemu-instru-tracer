@@ -6,6 +6,8 @@
 
  1. 安装opencv
   - 参考网址：http://blog.csdn.net/xiaoxiong345064855/article/details/7585422
+  - 若安装过程中报错，根据报错内容考虑安装gcc、python-dev、libgtk2.0-dev、libavcodec-dev、libavformat-dev、libjpeg62-dev、libtiff4-dev、cmake、libswscale-dev、libjasper-dev等。（也不需要全部安装，不再报错即可） 
+
  2. 安装tesseract
   - 参考网址：http://miphol.com/muse/2013/05/install-tesseract-ocr-on-ubunt.html
  3. 安装java6
