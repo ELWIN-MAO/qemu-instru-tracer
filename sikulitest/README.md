@@ -59,7 +59,7 @@
 	2.  运行脚本时需要用到的图片*********.png
 	3.  运行时生成的中间结果result
 	4.  运行此用例时执行的文件testrun.txt
-2. test.odt（运行脚本时修改的文件，默认放在/root/Desktop文件夹下）
+	5.  test.odt（运行脚本时修改的文件）
 3. 用到的软件
 	1. OpenOffice办公软件
 		- http://www.openoffice.org/download/index.html官网下载，选择合适的版本
@@ -78,7 +78,7 @@
 	2.  运行脚本时需要用到的图片*********.png
 	3.  运行时生成的中间结果result
 	4.  运行此用例时执行的文件testrun.txt
-2. test.ods（运行脚本时修改的文件，默认放在/root/Desktop文件夹下）
+	5.  test.ods（运行脚本时修改的文件）
 3. 用到的软件
 	1. OpenOffice办公软件
 		- http://www.openoffice.org/download/index.html官网下载，选择合适的版本
@@ -97,7 +97,7 @@
 	2.  运行脚本时需要用到的图片*********.png
 	3.  运行时生成的中间结果result
 	4.  运行此用例时执行的文件testrun.txt
-2. test.odp（运行脚本时修改的文件，默认放在/root/Desktop文件夹下）
+	5.  test.odp（运行脚本时修改的文件）
 3. 用到的软件
 	1. OpenOffice办公软件
 		- http://www.openoffice.org/download/index.html官网下载，选择合适的版本
@@ -116,8 +116,8 @@
 	2.  运行脚本时需要用到的图片*********.png
 	3.  运行时生成的中间结果result
 	4.  运行此用例时执行的文件testrun.txt
-2. test（运行脚本时修改的文件，默认放在/root/Desktop文件夹下）
-3. test2（运行脚本时修改的文件，默认放在/root/Desktop文件夹下）
+	5.  test（运行脚本时修改的文件）
+	6.  test2（运行脚本时修改的文件）
 注：此测试脚本中添加了函数调用功能，将对文本的编辑保存操作写在一个函数中。第一次调用此函数时对test文件进行操作，第二次调用此函数时对test2文件进行操作。
 4. 用到的软件
 	1. leafpad软件
@@ -131,7 +131,7 @@
 	3.  运行脚本时生成的截图play*********.png
 	4.  运行时生成的中间结果result
 	5.  运行此用例时执行的文件testrun.txt
-2. sikuli.mp3（运行脚本时播放的音乐文件，默认放在/root/Desktop文件夹下）
+	6.  sikuli.mp3（运行脚本时播放的音乐文件）
 3. 用到的软件
 	1. lxmusic音乐播放器
 		- # apt-get install lxmusic-dbg
@@ -145,7 +145,7 @@
 	3.  运行脚本时生成的截图play*********.png
 	4.  运行时生成的中间结果result
 	5.  运行此用例时执行的文件testrun.txt
-2. sikuli.mp4（运行脚本时播放的音乐文件，默认放在/root/Desktop文件夹下）
+	6.  sikuli.mp4（运行脚本时播放的视频文件）
 3. 用到的软件
 	1. GNOME Mplayer视频播放器
 		- 系统自带，无需安装
@@ -158,7 +158,7 @@
 	3.  运行脚本时生成的截图view*********.png
 	4.  运行时生成的中间结果result
 	5.  运行此用例时执行的文件testrun.txt
-2. sikuli.png（运行脚本时浏览的图片文件，默认放在/root/Desktop文件夹下）
+	6.  sikuli.png（运行脚本时浏览的图片文件）
 3. 用到的软件
 	1. gpicview图片浏览器
 		- 系统自带，无需安装
@@ -171,7 +171,7 @@
 	3.  运行脚本时生成的截图view*********.png
 	4.  运行时生成的中间结果result
 	5.  运行此用例时执行的文件testrun.txt
-2. sikuli.pdf（运行脚本时浏览的pdf文件，默认放在/root/Desktop文件夹下）
+	6.  sikuli.pdf（运行脚本时浏览的pdf文件）
 3. 用到的软件
 	1. Document viewer阅读器
 		- 系统自带，无需安装
