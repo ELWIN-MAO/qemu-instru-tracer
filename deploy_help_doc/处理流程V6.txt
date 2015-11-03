@@ -1,22 +1,22 @@
-´Ó¾­Ñé¿´a[i].log.stat¹şÏ£ÍêÒÔºóÃ¿¸öÎÄ¼ş100M×óÓÒ×îºÏÊÊ
-ÓÉÓÚbid pid tid  Ôö¼ÓµÄ¼ä¸ôºÜ²»Ò»Ñù£¬ÓÃmodµÄ»°£¬ºÏÊÊµÄmodÖµºÜÄÑÕÒ¡£Èç¹ûÊÇÁ¬ĞøµÄÄÇÓÃmod³öÀ´£¬
-¿ÉÒÔºÜºÃµÄ¿ØÖÆ¿éÊı£¬ÒÑ¾­¸÷¸ö¿éµÄ´óĞ¡Ò»ÖÂ¡£
+ï»¿ä»ç»éªŒçœ‹a[i].log.statå“ˆå¸Œå®Œä»¥åæ¯ä¸ªæ–‡ä»¶100Må·¦å³æœ€åˆé€‚
+ç”±äºbid pid tid  å¢åŠ çš„é—´éš”å¾ˆä¸ä¸€æ ·ï¼Œç”¨modçš„è¯ï¼Œåˆé€‚çš„modå€¼å¾ˆéš¾æ‰¾ã€‚å¦‚æœæ˜¯è¿ç»­çš„é‚£ç”¨modå‡ºæ¥ï¼Œ
+å¯ä»¥å¾ˆå¥½çš„æ§åˆ¶å—æ•°ï¼Œå·²ç»å„ä¸ªå—çš„å¤§å°ä¸€è‡´ã€‚
 
 
 
-ÔÚv_start_all.sh½Å±¾ÖĞ
-#delmym#./test_deploy.sh   ####×¢ÊÍÁË×Ô¶¯²¿Êğ²âÊÔÓÃÀıµÄ¹ı³Ì
+åœ¨v_start_all.shè„šæœ¬ä¸­
+#delmym#./test_deploy.sh   ####æ³¨é‡Šäº†è‡ªåŠ¨éƒ¨ç½²æµ‹è¯•ç”¨ä¾‹çš„è¿‡ç¨‹
 #delmym#/usr/local/qemu_mym/bin/qemu-system-i386   -hda  ../lubuntu/lubuntu12.04.raw   -boot c  -m 2048  -rtc clock=vm -icount shift=7,align=off    -d exec,in_asm -D ../logfifo 
-###×¢ÊÍÁËÉú³ÉqemuÈÕÖ¾µÄ¹ı³Ì
+###æ³¨é‡Šäº†ç”Ÿæˆqemuæ—¥å¿—çš„è¿‡ç¨‹
 
-#delmym#²ÉÓÃÁËÊä³öÎÄ¼şµ½¹ÜµÀµÄ·½·¨£¬Ò»¸öÈÕÖ¾¿ÉÒÔ¶à´Î²âÊÔ
+#delmym#é‡‡ç”¨äº†è¾“å‡ºæ–‡ä»¶åˆ°ç®¡é“çš„æ–¹æ³•ï¼Œä¸€ä¸ªæ—¥å¿—å¯ä»¥å¤šæ¬¡æµ‹è¯•
 cat ../xxxx.ww  >  ../logfifo
-#####ÒÔºó¿ÉÒÔ¸Ä»ØÀ´
+#####ä»¥åå¯ä»¥æ”¹å›æ¥
 
 
 
 
-Á÷Ë®´¦Àí  v_top.sh
+æµæ°´å¤„ç†  v_top.sh
 ===============================
 1.
 
@@ -24,16 +24,16 @@ for m_file in  ${file_array[@]}
 do
 echo $m_file
 
-./create_ab.py $log_path/$m_file      #Õâ¸ö¹ı³ÌÖĞÄÜ¹»·¢ÏÖ¿ÕµÄ¿é£¬¼ÇÂ¼µ½´íÎóÎÄ¼şempty_block.txtÖĞ¡£²»Â¼Èë*.log.a            
+./create_ab.py $log_path/$m_file      #è¿™ä¸ªè¿‡ç¨‹ä¸­èƒ½å¤Ÿå‘ç°ç©ºçš„å—ï¼Œè®°å½•åˆ°é”™è¯¯æ–‡ä»¶empty_block.txtä¸­ã€‚ä¸å½•å…¥*.log.a            
 ./stata.py < "${m_file}.a" > "${m_file}.a.stat"   ../regptn.txt   
-##ÔÚregptn.txtÖĞ·ÅÈëÁËÕıÔò±í´ïÊ½ÁĞ±í£¬ÔÚstata.pyÖĞ¶ÔÃ¿¸öÖ¸Áî¿é½øĞĞÁËÕıÔò±í´ïÊ½Æ¥Åä£¬²¢ÒÔexpptn+i  countµÄĞÎÊ½½øĞĞÁË£¬Í³¼Æ»ã×Ü
+##åœ¨regptn.txtä¸­æ”¾å…¥äº†æ­£åˆ™è¡¨è¾¾å¼åˆ—è¡¨ï¼Œåœ¨stata.pyä¸­å¯¹æ¯ä¸ªæŒ‡ä»¤å—è¿›è¡Œäº†æ­£åˆ™è¡¨è¾¾å¼åŒ¹é…ï¼Œå¹¶ä»¥expptn+i  countçš„å½¢å¼è¿›è¡Œäº†ï¼Œç»Ÿè®¡æ±‡æ€»
 ./statb.py < "${m_file}.b" > "b${m_file}.b.stat" 
 ./hash_a.py   < "${m_file}.a.stat" 
 ./hash_b.py   < "${m_file}.b.stat"
 
 #mv   $log_path/$m_file $log_done/
 
-#É¾³ı  0.log 0.log.a 0.log.b 0.log.a.stat 0.log.b.stat
+#åˆ é™¤  0.log 0.log.a 0.log.b 0.log.a.stat 0.log.b.stat
 rm -rf  $log_path/$m_file
 rm -rf  ${m_file}.a
 rm -rf  ${m_file}.a.stat
@@ -42,7 +42,7 @@ rm -rf  ${m_file}.b.stat
 done
 
 
-#ÊäÈë 0.log 1.log   Êä³ö0.log.a 0.log.b 0.log.a.stat 0.log.b.stat
+#è¾“å…¥ 0.log 1.log   è¾“å‡º0.log.a 0.log.b 0.log.a.stat 0.log.b.stat
 xxx.hsha
 xxx.hshb
 empty_block.txt
@@ -50,28 +50,28 @@ empty_block.txt
 
 
 
-»ã×Ü v_bottom.sh
+æ±‡æ€» v_bottom.sh
 ================================
 3.
-¶ÔbµÄhash¿é½øĞĞ»ã×ÜÕâÑù¾ÍÊÇ×ÜµÄbid,pid,tidµÄ»ã×Ü
+å¯¹bçš„hashå—è¿›è¡Œæ±‡æ€»è¿™æ ·å°±æ˜¯æ€»çš„bid,pid,tidçš„æ±‡æ€»
 
 for m_file in `ls -v   *.hshb`
 do
 ./stat_hash_b.py  <  ${m_file} > ${m_file}.stat
 
-#É¾³ıxxxx.hshb
+#åˆ é™¤xxxx.hshb
 rm -rf ${m_file}
 done
 
-#ÊäÈëxxxx.hshb Êä³öxxx.hshb.stat
+#è¾“å…¥xxxx.hshb è¾“å‡ºxxx.hshb.stat
 
 
 
 
 
 4.
-¶Ôxxx.hsha,  xxx.hshb.stat¹şÏ£¿é½øĞĞÁ¬½Ó
-ĞÎ³Éxxx.join
+å¯¹xxx.hsha,  xxx.hshb.statå“ˆå¸Œå—è¿›è¡Œè¿æ¥
+å½¢æˆxxx.join
 
 
 for m_file in `ls -v  *.hsha`
@@ -85,24 +85,24 @@ done
 sort fa_error.txt |uniq > fa_error_uniq.txt
 sort fb_error.txt |uniq > fb_eeror_uniq.txt
 
-ÊäÈë¡¡xxx.hsha   xxx.hshb.stat Êä³ö xxx.join   fa_error.txt  fb_error.txt   fa_error_uniq.txt  fb_error_uniq.txt
-###ÔÚ½«xxx.hasha¶ÁÈëÄÚ´æÊ±»áÊä³öaÖĞÖØ¸´¶¨ÒåµÄ¿é  fa_error.txt Ò²¾ÍÊÇËµÃ»ÓĞ¶ÔA½øĞĞÇåÏ´
-##Á¬½ÓµÄ¹ı³ÌÖĞ»áÊä³öbÖĞÊ¹ÓÃÁËµ«ÊÇÔÚaÖĞÕÒ²»µ½µÄ¿éµÄid, fb_error.txt  Èç¹ûÃ»ÓĞbugÊÇ²»»á³öÏÖÕâÖÖÇé¿öµÄ
+è¾“å…¥ã€€xxx.hsha   xxx.hshb.stat è¾“å‡º xxx.join   fa_error.txt  fb_error.txt   fa_error_uniq.txt  fb_error_uniq.txt
+###åœ¨å°†xxx.hashaè¯»å…¥å†…å­˜æ—¶ä¼šè¾“å‡ºaä¸­é‡å¤å®šä¹‰çš„å—  fa_error.txt ä¹Ÿå°±æ˜¯è¯´æ²¡æœ‰å¯¹Aè¿›è¡Œæ¸…æ´—
+##è¿æ¥çš„è¿‡ç¨‹ä¸­ä¼šè¾“å‡ºbä¸­ä½¿ç”¨äº†ä½†æ˜¯åœ¨aä¸­æ‰¾ä¸åˆ°çš„å—çš„id, fb_error.txt  å¦‚æœæ²¡æœ‰bugæ˜¯ä¸ä¼šå‡ºç°è¿™ç§æƒ…å†µçš„
 
  
 5.
-¶ÔÃ¿¸öÁ¬½ÓºÃµÄhash¿é½øĞĞ°´Ïß³Ì½øĞĞÍ³¼Æ
+å¯¹æ¯ä¸ªè¿æ¥å¥½çš„hashå—è¿›è¡ŒæŒ‰çº¿ç¨‹è¿›è¡Œç»Ÿè®¡
 for m_file in `ls -v  *.join`
 do
 ./thread_stat.py  < $m_file   > $m_file.subth
 rm -rf $m_file
 done
 
-ÊäÈë xxx.join   Êä³ö xxx.join.subth
+è¾“å…¥ xxx.join   è¾“å‡º xxx.join.subth
 
 6.
-¶Ôpid ½øĞĞ¹şÏ£MOD FFF40000
-¶Ôpid,tidÔÚ½øĞĞhash·Ö×éÊ¹µÃ·Ö³ÉºÃ¶à¿é
+å¯¹pid è¿›è¡Œå“ˆå¸ŒMOD FFF40000
+å¯¹pid,tidåœ¨è¿›è¡Œhashåˆ†ç»„ä½¿å¾—åˆ†æˆå¥½å¤šå—
 
 for m_file in `ls -v  *.join.subth`
 do
@@ -111,81 +111,81 @@ rm -rf $m_file
 done
 
 
-ÊäÈëxxx.join.subth  Êä³ö xxx.hshth
+è¾“å…¥xxx.join.subth  è¾“å‡º xxx.hshth
 
 
 6.1
-·Ö¿é½øĞĞ»ã×Ü
+åˆ†å—è¿›è¡Œæ±‡æ€»
 for m_file in `ls -v  *.hshth`
 do
 ./thread_stat.py  < $m_file  > $m_file.thd
 done
-µÃµ½µÄ¾ÍÊÇ×ÜµÄÏß³ÌµÄÍ³¼ÆĞÅÏ¢
+å¾—åˆ°çš„å°±æ˜¯æ€»çš„çº¿ç¨‹çš„ç»Ÿè®¡ä¿¡æ¯
 
-ÊäÈëxxx.hshth  Êä³ö xxx.hshth.thd
+è¾“å…¥xxx.hshth  è¾“å‡º xxx.hshth.thd
 
 
-¶Ôhash¿é½øĞĞÅÅĞò
+å¯¹hashå—è¿›è¡Œæ’åº
 cat `ls -v *.hshth.thd` | sort  -k 1 -k 2  > v_all_thread.thst 
 
-ÊäÈë xxx.hash.thd  Êä³ö  v_all_thread.thst
+è¾“å…¥ xxx.hash.thd  è¾“å‡º  v_all_thread.thst
 
 
 
 7.
-¶Ô×ÜµÄÏß³ÌĞÅÏ¢»ã×ÜµÃµ½ËùÓĞµÄÖ¸ÁîÆµ¶È
+å¯¹æ€»çš„çº¿ç¨‹ä¿¡æ¯æ±‡æ€»å¾—åˆ°æ‰€æœ‰çš„æŒ‡ä»¤é¢‘åº¦
 ./proc_all.py < v_all_thread.thst   > v_all.txt
-ÊäÈë xxx.hash.thd  Êä³ö  v_all.txt
+è¾“å…¥ xxx.hash.thd  è¾“å‡º  v_all.txt
 
 
-¶ÔÖ¸ÁîÆµ¶È½øĞĞÅÅĞò
+å¯¹æŒ‡ä»¤é¢‘åº¦è¿›è¡Œæ’åº
 sort -nr -k 2 v_all.txt  > v_all_sort.txt
 
 
 9.
-Éú³É×ÜµÄÏß³ÌÖ¸ÁîÆµ¶ÈÍ³¼Æhtml
+ç”Ÿæˆæ€»çš„çº¿ç¨‹æŒ‡ä»¤é¢‘åº¦ç»Ÿè®¡html
 ./gen_thread_table.py  < v_all_thread.thst  > v_all_thread.thst.html normal
 
-Éú³É×ÜµÄÏß³ÌÕıÔò±í´ïÊ½Æµ¶ÈÍ³¼Æhtml
+ç”Ÿæˆæ€»çš„çº¿ç¨‹æ­£åˆ™è¡¨è¾¾å¼é¢‘åº¦ç»Ÿè®¡html
 ./gen_thread_table.py  < v_all_thread.thst  > v_exp_all_thread.thst.html exp
 
 
 
 8.
-Éú³É×ÜµÄÖ¸ÁîÆµ¶Èhtml
+ç”Ÿæˆæ€»çš„æŒ‡ä»¤é¢‘åº¦html
 ./gen_all_table.py  < v_all_sort.txt  > v_all_sort.html normal
 
-Éú³É×ÜµÄÕıÔò±í´ïÊ½Æµ¶Èhtml
+ç”Ÿæˆæ€»çš„æ­£åˆ™è¡¨è¾¾å¼é¢‘åº¦html
 ./gen_all_table.py  < v_all_sort.txt  > v_exp_all_sort.html exp
 
 
-²¿Êğ·½·¨£º
+éƒ¨ç½²æ–¹æ³•ï¼š
 #############################
-mount lubuntu.raw  µ½./rawmount
-1.¿½±´test***.sikuli.tar.gz µ½¹Ì¶¨µÄÄ¿Â¼./rawmount/root/Documents
+mount lubuntu.raw  åˆ°./rawmount
+1.æ‹·è´test***.sikuli.tar.gz åˆ°å›ºå®šçš„ç›®å½•./rawmount/root/Documents
 
-2.½âÑ¹
+2.è§£å‹
 test***.sikuli.tar.gz
-»ñÈ¡µ½test***.sikuliÎÄ¼ş¼Ğ
+è·å–åˆ°test***.sikuliæ–‡ä»¶å¤¹
 
 3.
-´Ótest***.sikuliÎÄ¼ş¼ĞÖĞ¶ÁÈ¡testrun.txt
-¶ÁÈ¡ÆäÄÚÈİµ½
+ä»test***.sikuliæ–‡ä»¶å¤¹ä¸­è¯»å–testrun.txt
+è¯»å–å…¶å†…å®¹åˆ°
 aaa.sh
 
 #!/bin/bash
 rm -rf /root/new/bbb.txt
 echo "start" > /root/new/bbb.txt
 date >> /root/new/bbb.txt
-#####ÒªÌæ»»µÄÃüÁî/usr/local/runScript -r /root/Documents/test-ods.sikuli
+#####è¦æ›¿æ¢çš„å‘½ä»¤/usr/local/runScript -r /root/Documents/test-ods.sikuli
 date >> /root/new/bbb.txt
 echo "stop" >> /root/new/bbb.txt
 lxterminal &
 #shutdown -h now
 
 
-½«Ö´ĞĞÍêµÄ²âÊÔÓÃ´Ólubuntu¿½±´³öÀ´µÄÊ±ºò±ØĞëÖªµÀ¿½±´ÄÄ¸öÎÄ¼ş¼Ğ
-·½·¨ÊÇ²¿ÊğµÄÊ±ºò£¬½¨Á¢Ò»¸öÍ¬ÃûµÄÎÄ¼ş¼ĞÔÚ./test_resultÄ¿Â¼ÏÂ
+å°†æ‰§è¡Œå®Œçš„æµ‹è¯•ç”¨ä»lubuntuæ‹·è´å‡ºæ¥çš„æ—¶å€™å¿…é¡»çŸ¥é“æ‹·è´å“ªä¸ªæ–‡ä»¶å¤¹
+æ–¹æ³•æ˜¯éƒ¨ç½²çš„æ—¶å€™ï¼Œå»ºç«‹ä¸€ä¸ªåŒåçš„æ–‡ä»¶å¤¹åœ¨./test_resultç›®å½•ä¸‹
 4.
 umount rawmount
-ÔËĞĞĞéÄâ»ú½øĞĞÖ¸ÁîÆµ¶ÈÍ³¼Æ£¬Íê±Ïºó½«²âÊÔÓÃÀıËùÔÚµÄÎÄ¼ş¼Ğ´ò°ü¿½±´³öÀ´£¬·µ»Ø¸øÓÃ»§
+è¿è¡Œè™šæ‹Ÿæœºè¿›è¡ŒæŒ‡ä»¤é¢‘åº¦ç»Ÿè®¡ï¼Œå®Œæ¯•åå°†æµ‹è¯•ç”¨ä¾‹æ‰€åœ¨çš„æ–‡ä»¶å¤¹æ‰“åŒ…æ‹·è´å‡ºæ¥ï¼Œè¿”å›ç»™ç”¨æˆ·
