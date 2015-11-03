@@ -25,12 +25,21 @@ print head
 all_inst=[]
 dict={}
 
+nmflg=True
+
+if( cmp(sys.argv[1],"normal")==0  ):
+    nmflg=True
+else:
+    nmflg=False
+
 while True:
     line=ff.readline()
     if not line : break
     line=line.strip()
-    all_inst.append(line)
-
+    if ((not nmflg)  and line.startswith("expptn")):
+        all_inst.append(line)
+    if (nmflg and  (not line.startswith("expptn") )):
+        all_inst.append(line)
 all_inst.sort()
 
 for opcode in all_inst:

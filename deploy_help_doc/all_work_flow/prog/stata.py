@@ -1,11 +1,31 @@
 #!/usr/bin/python
 
 import sys
-
+import re
 
 log=sys.stdin
 m_queue=[]
 
+
+logb=open(sys.argv[1],'r')
+
+explt=[]
+
+while True:
+    line3=logb.readline()
+    if not line3 : break
+    explt.append(line3.strip())
+logb.close()
+
+
+
+def expcount(m_queue3,aexplt) : 
+    i=0
+    for exppt in aexplt :
+        i=i+1
+        patn = re.compile(exppt)
+        expresult=patn.findall(m_queue3)
+        print " %s %d" %("expptn"+str(i),len(expresult)),
 
 
 def tongji(m_queue2) :
@@ -25,6 +45,8 @@ def tongji(m_queue2) :
             dict[opcode]=1
     for key in dict.keys():
         print " %s %d" %(key,dict[key]),
+    queue_to_string = "".join(m_queue2)
+    expcount(queue_to_string,explt)
     print ''
 
 

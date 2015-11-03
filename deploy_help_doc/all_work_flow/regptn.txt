@@ -1,0 +1,4 @@
+cmp\s+%.+?\n.+?je
+cmp\s+\(.+?,%.+\n.+?je
+mov
+xor

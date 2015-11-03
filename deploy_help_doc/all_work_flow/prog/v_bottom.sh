@@ -62,12 +62,21 @@ sort -k 2nr -k 1 v_all.txt  > v_all_sort.txt
 rm -rf ./v_all.txt
 
 echo "$(date "+%Y.%m.%d.%H.%M") gen_thread_table"
-./gen_thread_table.py  < v_all_thread.thst  > v_all_thread.thst.html
+./gen_thread_table.py  < v_all_thread.thst  > v_all_thread.thst.html normal
+
+
+echo "$(date "+%Y.%m.%d.%H.%M") gen_exp_thread_table"
+./gen_thread_table.py  < v_all_thread.thst  > v_exp_all_thread.thst.html exp
 
 rm -rf ./v_all_thread.thst
 
 echo "$(date "+%Y.%m.%d.%H.%M") gen_all_table"
-./gen_all_table.py  < v_all_sort.txt  > v_all_sort.html
+./gen_all_table.py  < v_all_sort.txt  > v_all_sort.html normal
+
+echo "$(date "+%Y.%m.%d.%H.%M") gen_exp_all_table"
+./gen_all_table.py  < v_all_sort.txt  > v_exp_all_sort.html exp
+
+
 
 rm -rf ./v_all_sort.txt
 rm -rf ./instru_set.txt

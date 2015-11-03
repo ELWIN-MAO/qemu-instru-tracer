@@ -20,15 +20,32 @@ head ="""<html>
 
 print  head
 
+nmflg=True
+
+if( cmp(sys.argv[1],"normal")==0  ):
+    nmflg=True
+else:
+    nmflg=False
+
+
+
 
 while True:
     line=fa.readline()
     if not line : break
     words=line.split()
-    print "<tr>"
-    print "<th>"+words[0]+"</th>"
-    print "<td>"+words[1]+"</td>"
-    print "</tr>"
+
+
+    if ((not nmflg)  and words[0].startswith("expptn")):
+        print "<tr>"
+        print "<th>"+words[0]+"</th>"
+        print "<td>"+words[1]+"</td>"
+        print "</tr>"
+    if (nmflg and  (not line.startswith("expptn") )):
+        print "<tr>"
+        print "<th>"+words[0]+"</th>"
+        print "<td>"+words[1]+"</td>"
+        print "</tr>"
 
 tail='''</table>
 
