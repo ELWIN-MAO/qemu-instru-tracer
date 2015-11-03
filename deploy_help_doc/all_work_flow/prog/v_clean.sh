@@ -9,3 +9,4 @@ rm -rf ./qemu_log.txt  ./v_top_log.txt  ./empty_block.txt  ./*.log.a  ./*.log.b 
 
 
 rm -rf   ./v_all_thread.thst.html   ./v_all_sort.html ./index_page.html
+rm -rf   ./v_exp_all_thread.thst.html  ./v_exp_all_sort.html 

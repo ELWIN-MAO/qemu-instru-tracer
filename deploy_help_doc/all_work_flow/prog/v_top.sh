@@ -39,7 +39,7 @@ echo "$(date "+%Y.%m.%d.%H.%M") create_ab $m_file"
 ./create_ab.py $log_path/$m_file                      
 
 echo "$(date "+%Y.%m.%d.%H.%M") stata  ${m_file}.a  ${m_file}.a.stat"    
-./stata.py < "${m_file}.a" > "${m_file}.a.stat"    
+./stata.py < "${m_file}.a" > "${m_file}.a.stat"  ../regptn.txt  
 
 echo "$(date "+%Y.%m.%d.%H.%M") statb  ${m_file}.b  ${m_file}.b.stat" 
 ./statb.py < "${m_file}.b" > "${m_file}.b.stat" 
