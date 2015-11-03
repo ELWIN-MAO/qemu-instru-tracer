@@ -220,7 +220,7 @@ static void cpu_exec_nocache(CPUArchState *env, int max_cycles,
 		cpu_memory_rw_debug(cpu,current+0x2e4,(uint8_t *)&processname,sizeof(processname),0);
 		if(processname[0]==0)
 			strcpy(processname,"hgj_none");
-        qemu_log("E "TARGET_FMT_lx" "TARGET_FMT_lx" "TARGET_FMT_lx" %s\n",tb->index,env->cr[3],tid,processname);
+        qemu_log("E %08x "TARGET_FMT_lx" "TARGET_FMT_lx" %s\n",tb->index,env->cr[3],tid,processname);
     }
                      
     cpu->current_tb = tb;
@@ -476,7 +476,7 @@ int cpu_exec(CPUArchState *env)
 					cpu_memory_rw_debug(cpu,current+0x2e4,(uint8_t *)&processname,sizeof(processname),0);
 					if(processname[0]==0)
 						strcpy(processname,"hgj_none");
-                    qemu_log("E "TARGET_FMT_lx" "TARGET_FMT_lx" "TARGET_FMT_lx" %s\n",tb->index,env->cr[3],tid,processname);	
+                    qemu_log("E %08x "TARGET_FMT_lx" "TARGET_FMT_lx" %s\n",tb->index,env->cr[3],tid,processname);	
                 }
                 /* see if we can patch the calling TB. When the TB
                    spans two pages, we cannot safely do a direct

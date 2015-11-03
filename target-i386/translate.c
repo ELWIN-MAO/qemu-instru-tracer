@@ -8057,7 +8057,7 @@ static inline void gen_intermediate_code_internal(X86CPU *cpu,
         //qemu_log("IN: %s\n", lookup_symbol(pc_start));
         tb->index = blockcount;
 		blockcount++;
-        qemu_log("T "TARGET_FMT_lx"\n",tb->index);
+        qemu_log("T %08x\n",tb->index);
 #ifdef TARGET_X86_64
         if (dc->code64)
             disas_flags = 2;
