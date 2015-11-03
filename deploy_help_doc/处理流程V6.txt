@@ -4,6 +4,18 @@
 
 
 
+在v_start_all.sh脚本中
+#delmym#./test_deploy.sh   ####注释了自动部署测试用例的过程
+#delmym#/usr/local/qemu_mym/bin/qemu-system-i386   -hda  ../lubuntu/lubuntu12.04.raw   -boot c  -m 2048  -rtc clock=vm -icount shift=7,align=off    -d exec,in_asm -D ../logfifo 
+###注释了生成qemu日志的过程
+
+#delmym#采用了输出文件到管道的方法，一个日志可以多次测试
+cat ../xxxx.ww  >  ../logfifo
+#####以后可以改回来
+
+
+
+
 流水处理  v_top.sh
 ===============================
 1.
@@ -13,7 +25,8 @@ do
 echo $m_file
 
 ./create_ab.py $log_path/$m_file      #这个过程中能够发现空的块，记录到错误文件empty_block.txt中。不录入*.log.a            
-./stata.py < "${m_file}.a" > "${m_file}.a.stat"    
+./stata.py < "${m_file}.a" > "${m_file}.a.stat"   ../regptn.txt   
+##在regptn.txt中放入了正则表达式列表，在stata.py中对每个指令块进行了正则表达式匹配，并以expptn+i  count的形式进行了，统计汇总
 ./statb.py < "${m_file}.b" > "b${m_file}.b.stat" 
 ./hash_a.py   < "${m_file}.a.stat" 
 ./hash_b.py   < "${m_file}.b.stat"
@@ -131,11 +144,19 @@ sort -nr -k 2 v_all.txt  > v_all_sort.txt
 
 9.
 生成总的线程指令频度统计html
-./gen_thread_table.py  < v_all_thread.thst  > v_all_thread.thst.html
+./gen_thread_table.py  < v_all_thread.thst  > v_all_thread.thst.html normal
+
+生成总的线程正则表达式频度统计html
+./gen_thread_table.py  < v_all_thread.thst  > v_exp_all_thread.thst.html exp
+
+
 
 8.
 生成总的指令频度html
-./gen_all_table.py  < v_all_sort.txt  > v_all_sort.html
+./gen_all_table.py  < v_all_sort.txt  > v_all_sort.html normal
+
+生成总的正则表达式频度html
+./gen_all_table.py  < v_all_sort.txt  > v_exp_all_sort.html exp
 
 
 部署方法：
