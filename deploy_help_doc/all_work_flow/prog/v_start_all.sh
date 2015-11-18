@@ -20,11 +20,12 @@ mkfifo ../logfifo
 
 echo "$(date "+%Y.%m.%d.%H.%M") qemu start" | tee -a qemu_log.txt
 
-#delmym#/usr/local/qemu_mym/bin/qemu-system-i386   -hda  ../lubuntu/lubuntu12.04.raw   -boot c  -m 2048  -rtc clock=vm -icount shift=7,align=off    -d exec,in_asm -D ../logfifo 
+#delmym#
+/usr/local/qemu_mym/bin/qemu-system-i386   -hda  ../lubuntu/lubuntu12.04.raw   -boot c  -m 2048  -rtc clock=vm -icount shift=7,align=off    -d exec,in_asm -D ../logfifo 
 
 
 #delmym#
-cat ../xxxx.ww  >  ../logfifo
+#cat ../xxxx.ww  >  ../logfifo
 
 
 touch ../log_qie_kuai/end  # the log end flag
