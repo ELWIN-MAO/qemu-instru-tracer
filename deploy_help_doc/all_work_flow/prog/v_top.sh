@@ -52,8 +52,8 @@ echo "$(date "+%Y.%m.%d.%H.%M") hash_a  ${m_file}.a.stat"
 echo "$(date "+%Y.%m.%d.%H.%M") hash_b  ${m_file}.b.stat"
 ./hash_b.py   < "${m_file}.b.stat"
 
-#mv   $log_path/$m_file $log_done/ 
-rm -rf  $log_path/$m_file
+mv   $log_path/$m_file $log_done/ 
+#rm -rf  $log_path/$m_file
 rm -rf  ${m_file}.a
 rm -rf  ${m_file}.a.stat
 rm -rf  ${m_file}.b
