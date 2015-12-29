@@ -35,8 +35,8 @@ while True:
     block_id=words[1] #get block_id
     pid   =words[2] #get pid
     tid   =words[3] #get tid
-    tname =words[4] #get tname
-    b_count=int(words[6]) #get b_count
+    tname =words[4] #get tname the awful space has ben fixed by hash_b.py
+    b_count=int(words[-1]) #get b_count
     if dict.has_key(block_id):
         f_join.write(pid+' '+tid+' '+tname)  #only out put pid tid wich has a valid block_id
         ins_count=dict[block_id]

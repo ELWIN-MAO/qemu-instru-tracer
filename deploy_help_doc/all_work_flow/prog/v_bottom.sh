@@ -6,6 +6,7 @@ for m_file in `ls -v   *.hshb`
 do
 echo "$(date "+%Y.%m.%d.%H.%M") stat_hash_b  ${m_file}   ${m_file}.stat"
 ./stat_hash_b.py  <  ${m_file} > ${m_file}.stat
+#del_mym
 rm -rf ${m_file}
 done
 
@@ -15,7 +16,6 @@ do
 m=${m_file%.*}
 echo "$(date "+%Y.%m.%d.%H.%M") join ${m_file} ${m}.hshb.stat"
 ./join.py   ${m_file}    ${m}.hshb.stat
-rm -rf  ${m_file}    ${m}.hshb.stat
 done
 
 

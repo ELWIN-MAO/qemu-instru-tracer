@@ -12,7 +12,7 @@ while True:
     	dict[line]=1
 
 for key in dict.keys():
-    print "%s = %d" %(key,dict[key])  #"=" is good for stat_hash_b.py
+    print "%s === %d" %(key,dict[key])  #"===" is good for stat_hash_b.py
 
 
 ###no need to sort dict  by (block_id pid tid)

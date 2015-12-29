@@ -1,6 +1,13 @@
 #!/usr/bin/python
 import sys
 
+#del_mym
+#debug_log=open("debug.txt",'w')
+#linenb=0
+#del_mym
+
+
+
 fa=sys.stdin
 
 dict={}
@@ -9,9 +16,13 @@ while True:
     line=fa.readline()
     if not line : break
     words=line.split()
+    #del_mym
+#    linenb=linenb+1
+#    debug_log.write(str(linenb)+'\n') 
+    #del_mym
     pid   =words[0].strip() #get pid
     tid   =words[1].strip() #get tid
-    tname =words[2].strip() #get tname
+    tname =words[2].strip() #get tname the awful space has ben fixed by hash_b.py
     pid_tid_tname = pid+' '+tid+' '+tname
     for i in range(3,len(words),2) : #very important for empty block defined
         ins_count[words[i]]=int(words[i+1])

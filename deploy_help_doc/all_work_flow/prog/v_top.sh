@@ -54,10 +54,12 @@ echo "$(date "+%Y.%m.%d.%H.%M") hash_b  ${m_file}.b.stat"
 
 mv   $log_path/$m_file $log_done/ 
 #rm -rf  $log_path/$m_file
+#del_mym
 rm -rf  ${m_file}.a
 rm -rf  ${m_file}.a.stat
 rm -rf  ${m_file}.b
 rm -rf  ${m_file}.b.stat
+#del_mym
 done
 else
 sleep 3
